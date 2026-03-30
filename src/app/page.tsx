@@ -104,7 +104,7 @@ export default function HunterPage() {
   };
 
   const FIREBASE_PROJECT_ID = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
-  
+
   // Keep ref in sync with state for SSE access
   useEffect(() => {
     statsRef.current = stats;
@@ -124,7 +124,7 @@ export default function HunterPage() {
     setIsHunting(true);
     setLogs([]);
     setStats({ leads: 0, scanned: 0 });
-    
+
     addLog(`🚀 Initializing Precision Target Engine for ${category}...`, "highlight");
     addLog(`📍 Location Scope: ${selectedDistrict}, ${selectedStateName}`, "info");
     const initialLogs = [
@@ -133,7 +133,7 @@ export default function HunterPage() {
       "Connection stabilized. Ready for target extraction.",
     ];
     initialLogs.forEach(l => addLog(l, "info"));
-    
+
     try {
       const response = await fetch("/api/scrape", {
         method: "POST",
@@ -158,7 +158,7 @@ export default function HunterPage() {
 
         const chunk = decoder.decode(value, { stream: true });
         const lines = chunk.split("\n");
-        
+
         for (const line of lines) {
           if (line.startsWith("data: ")) {
             try {
@@ -196,7 +196,7 @@ export default function HunterPage() {
                 `;
                 addLog(asciiArt, "success-bold");
                 addLog("✨ Extraction Cycle Finalized. New Commit established in Secure Vault.", "highlight");
-                
+
                 // Fetch latest commit to show in modal
                 setTimeout(async () => {
                   try {
@@ -220,7 +220,7 @@ export default function HunterPage() {
                       body: JSON.stringify(query)
                     });
                     const commitData = await res.json();
-                    
+
                     if (Array.isArray(commitData) && commitData[0]?.document) {
                       const doc = commitData[0].document;
                       setLatestCommit({
@@ -318,53 +318,53 @@ export default function HunterPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         <div className="lg:col-span-5 space-y-4">
-          <motion.div 
+          <motion.div
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 0.1 }}
             className="premium-card p-4"
           >
             <div className="flex items-center justify-between mb-3 border-b border-slate-100 pb-2">
-               <h2 className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] flex items-center gap-2">
-                 <Target size={12} className="text-primary" />
-                 Target Scope
-               </h2>
-                <div className="relative">
-                  <AnimatePresence>
-                    {showFilterHint && !showFilters && (
-                      <motion.div
-                        initial={{ opacity: 0, x: 20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        exit={{ opacity: 0, x: 20 }}
-                        className="absolute right-full mr-4 whitespace-nowrap z-50 pointer-events-none"
-                      >
-                         <div className="flex items-center gap-2">
-                           <div className="bg-primary text-white text-[9px] font-black py-1.5 px-3 rounded-full shadow-lg shadow-primary/20 animate-bounce tracking-widest uppercase">
-                             Unlock Pro Targeting
-                           </div>
-                           <motion.div
-                             animate={{ x: [0, 5, 0] }}
-                             transition={{ repeat: Infinity, duration: 1.5 }}
-                             className="text-primary"
-                           >
-                             <Sliders size={16} strokeWidth={3} className="rotate-90" />
-                           </motion.div>
-                         </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
+              <h2 className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] flex items-center gap-2">
+                <Target size={12} className="text-primary" />
+                Target Scope
+              </h2>
+              <div className="relative">
+                <AnimatePresence>
+                  {showFilterHint && !showFilters && (
+                    <motion.div
+                      initial={{ opacity: 0, x: 20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: 20 }}
+                      className="absolute right-full mr-4 whitespace-nowrap z-50 pointer-events-none"
+                    >
+                      <div className="flex items-center gap-2">
+                        <div className="bg-primary text-white text-[9px] font-black py-1.5 px-3 rounded-full shadow-lg shadow-primary/20 animate-bounce tracking-widest uppercase">
+                          Unlock Pro Targeting
+                        </div>
+                        <motion.div
+                          animate={{ x: [0, 5, 0] }}
+                          transition={{ repeat: Infinity, duration: 1.5 }}
+                          className="text-primary"
+                        >
+                          <Sliders size={16} strokeWidth={3} className="rotate-90" />
+                        </motion.div>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
 
-                  <button 
-                    onClick={handleFilterClick}
-                className={clsx(
-                  "flex items-center gap-2 px-3 py-1.5 rounded-xl transition-all text-[10px] font-black uppercase tracking-widest border shadow-sm",
-                  showFilters 
-                    ? "bg-primary text-white border-primary shadow-primary/20" 
-                    : "bg-white border-slate-200 text-slate-600 hover:border-primary hover:text-primary"
-                )}
-               >
-                 <Sliders size={12} className={clsx(showFilters ? "text-white" : "text-primary")} />
-                 {showFilters ? "Close Filters" : "Filter Settings"}
+                <button
+                  onClick={handleFilterClick}
+                  className={clsx(
+                    "flex items-center gap-2 px-3 py-1.5 rounded-xl transition-all text-[10px] font-black uppercase tracking-widest border shadow-sm",
+                    showFilters
+                      ? "bg-primary text-white border-primary shadow-primary/20"
+                      : "bg-white border-slate-200 text-slate-600 hover:border-primary hover:text-primary"
+                  )}
+                >
+                  <Sliders size={12} className={clsx(showFilters ? "text-white" : "text-primary")} />
+                  {showFilters ? "Close Filters" : "Filter Settings"}
                   {filters.enabled && !showFilters && (
                     <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
                   )}
@@ -375,7 +375,7 @@ export default function HunterPage() {
             {/* Collapsible Filter settings */}
             <AnimatePresence>
               {showFilters && (
-                <motion.div 
+                <motion.div
                   initial={{ height: 0, opacity: 0 }}
                   animate={{ height: "auto", opacity: 1 }}
                   exit={{ height: 0, opacity: 0 }}
@@ -386,7 +386,7 @@ export default function HunterPage() {
                       <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Select Template</span>
                       <div className="px-2 py-0.5 bg-primary/10 text-primary text-[8px] font-black rounded-md uppercase">{activeTemplate}</div>
                     </div>
-                    
+
                     <div className="grid grid-cols-2 gap-2 mb-3">
                       {templates.map(t => (
                         <button
@@ -394,8 +394,8 @@ export default function HunterPage() {
                           onClick={() => applyTemplate(t)}
                           className={clsx(
                             "p-2 rounded-xl border text-left transition-all",
-                            activeTemplate === t.name 
-                              ? "bg-white border-primary shadow-sm ring-1 ring-primary/20" 
+                            activeTemplate === t.name
+                              ? "bg-white border-primary shadow-sm ring-1 ring-primary/20"
                               : "bg-white/40 border-slate-200 hover:border-slate-300 opacity-70 hover:opacity-100"
                           )}
                         >
@@ -410,63 +410,63 @@ export default function HunterPage() {
 
                     <div className="space-y-2 pt-2 border-t border-slate-200/50">
                       <label className="flex items-center gap-2 cursor-pointer group">
-                         <div className={clsx(
-                           "w-8 h-4 rounded-full relative transition-all",
-                           filters.enabled ? "bg-primary" : "bg-slate-200"
-                         )}>
-                           <motion.div 
-                             animate={{ x: filters.enabled ? 16 : 0 }}
-                             className="absolute top-0.5 left-0.5 w-3 h-3 bg-white rounded-full shadow-sm"
-                           />
-                         </div>
-                         <input 
-                            type="checkbox" 
-                            className="hidden"
-                            checked={filters.enabled}
-                            onChange={(e) => setFilters(prev => ({ ...prev, enabled: e.target.checked }))}
-                         />
-                         <span className="text-[9px] font-black text-slate-600 uppercase tracking-widest">Apply Active Profile</span>
+                        <div className={clsx(
+                          "w-8 h-4 rounded-full relative transition-all",
+                          filters.enabled ? "bg-primary" : "bg-slate-200"
+                        )}>
+                          <motion.div
+                            animate={{ x: filters.enabled ? 16 : 0 }}
+                            className="absolute top-0.5 left-0.5 w-3 h-3 bg-white rounded-full shadow-sm"
+                          />
+                        </div>
+                        <input
+                          type="checkbox"
+                          className="hidden"
+                          checked={filters.enabled}
+                          onChange={(e) => setFilters(prev => ({ ...prev, enabled: e.target.checked }))}
+                        />
+                        <span className="text-[9px] font-black text-slate-600 uppercase tracking-widest">Apply Active Profile</span>
                       </label>
 
                       {filters.enabled && (
                         <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="space-y-2.5 p-3 bg-white rounded-xl border border-slate-100 shadow-sm mt-2">
-                           <div className="flex items-center justify-between">
-                              <span className="text-[8px] font-bold text-slate-500 uppercase">Min Rating: <span className="text-primary font-black ml-1">{filters.minRating}★</span></span>
-                              <input 
-                                type="range" min="0" max="5" step="0.1" 
-                                value={filters.minRating}
-                                onChange={(e) => setFilters(prev => ({ ...prev, minRating: parseFloat(e.target.value) }))}
-                                className="w-20 h-1 accent-primary rounded-lg appearance-none bg-slate-100 cursor-pointer" 
-                              />
-                           </div>
-                           <div className="flex items-center justify-between">
-                              <span className="text-[8px] font-bold text-slate-500 uppercase">Min Reviews:</span>
-                              <input 
-                                type="number" 
-                                value={filters.minReviews}
-                                onChange={(e) => setFilters(prev => ({ ...prev, minReviews: parseInt(e.target.value) || 0 }))}
-                                className="w-12 bg-slate-50 border border-slate-200 rounded px-1 text-[9px] font-bold text-center" 
-                              />
-                           </div>
-                           <hr className="border-slate-50" />
-                           <label className="flex items-center justify-between cursor-pointer group">
-                              <span className="text-[8px] font-bold text-slate-500 uppercase group-hover:text-slate-700 transition-colors">Has No Website</span>
-                              <input 
-                                type="checkbox" 
-                                checked={filters.requireNoWebsite}
-                                onChange={(e) => setFilters(prev => ({ ...prev, requireNoWebsite: e.target.checked }))}
-                                className="w-3 h-3 accent-primary cursor-pointer"
-                              />
-                           </label>
-                           <label className="flex items-center justify-between cursor-pointer group">
-                              <span className="text-[8px] font-bold text-slate-500 uppercase group-hover:text-slate-700 transition-colors">Phone Required</span>
-                              <input 
-                                type="checkbox" 
-                                checked={filters.requirePhone}
-                                onChange={(e) => setFilters(prev => ({ ...prev, requirePhone: e.target.checked }))}
-                                className="w-3 h-3 accent-primary cursor-pointer"
-                              />
-                           </label>
+                          <div className="flex items-center justify-between">
+                            <span className="text-[8px] font-bold text-slate-500 uppercase">Min Rating: <span className="text-primary font-black ml-1">{filters.minRating}★</span></span>
+                            <input
+                              type="range" min="0" max="5" step="0.1"
+                              value={filters.minRating}
+                              onChange={(e) => setFilters(prev => ({ ...prev, minRating: parseFloat(e.target.value) }))}
+                              className="w-20 h-1 accent-primary rounded-lg appearance-none bg-slate-100 cursor-pointer"
+                            />
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <span className="text-[8px] font-bold text-slate-500 uppercase">Min Reviews:</span>
+                            <input
+                              type="number"
+                              value={filters.minReviews}
+                              onChange={(e) => setFilters(prev => ({ ...prev, minReviews: parseInt(e.target.value) || 0 }))}
+                              className="w-12 bg-slate-50 border border-slate-200 rounded px-1 text-[9px] font-bold text-center"
+                            />
+                          </div>
+                          <hr className="border-slate-50" />
+                          <label className="flex items-center justify-between cursor-pointer group">
+                            <span className="text-[8px] font-bold text-slate-500 uppercase group-hover:text-slate-700 transition-colors">Has No Website</span>
+                            <input
+                              type="checkbox"
+                              checked={filters.requireNoWebsite}
+                              onChange={(e) => setFilters(prev => ({ ...prev, requireNoWebsite: e.target.checked }))}
+                              className="w-3 h-3 accent-primary cursor-pointer"
+                            />
+                          </label>
+                          <label className="flex items-center justify-between cursor-pointer group">
+                            <span className="text-[8px] font-bold text-slate-500 uppercase group-hover:text-slate-700 transition-colors">Phone Required</span>
+                            <input
+                              type="checkbox"
+                              checked={filters.requirePhone}
+                              onChange={(e) => setFilters(prev => ({ ...prev, requirePhone: e.target.checked }))}
+                              className="w-3 h-3 accent-primary cursor-pointer"
+                            />
+                          </label>
                         </motion.div>
                       )}
                     </div>
@@ -628,13 +628,13 @@ export default function HunterPage() {
                   <div className="w-2.5 h-2.5 rounded-full bg-[#27C93F]" />
                 </div>
                 <span className="text-[9px] font-black uppercase text-slate-100 tracking-[0.2em] font-mono flex items-center gap-2">
-                   <ShieldCheck size={12} className="text-emerald-400" />
-                   ROOT@GORILLA-CORE
+                  <ShieldCheck size={12} className="text-emerald-400" />
+                  ROOT@GORILLA-CORE
                 </span>
               </div>
-              
+
               <div className="flex items-center gap-2">
-                <button 
+                <button
                   onClick={copyLogs}
                   className="px-2 py-1 bg-slate-800 hover:bg-slate-700 text-slate-100 text-[8px] font-black uppercase tracking-widest rounded transition-all border border-slate-700 shadow-sm"
                 >
@@ -665,10 +665,10 @@ export default function HunterPage() {
                         className={clsx(
                           "mb-1.5 flex gap-2 font-mono",
                           isLatest ? "text-cyan-400 font-bold" :
-                          log.type === "success" ? "text-purple-400" : 
-                          log.type === "success-bold" ? "text-pink-400 font-bold border-l-2 border-pink-500 pl-2 my-2" :
-                          log.type === "error" ? "text-rose-400" :
-                          "text-emerald-500/80"
+                            log.type === "success" ? "text-purple-400" :
+                              log.type === "success-bold" ? "text-pink-400 font-bold border-l-2 border-pink-500 pl-2 my-2" :
+                                log.type === "error" ? "text-rose-400" :
+                                  "text-emerald-500/80"
                         )}
                       >
                         <span className="shrink-0 opacity-40 text-[8px]">[{log.time}]</span>
@@ -714,19 +714,19 @@ export default function HunterPage() {
               className="relative w-full max-w-lg bg-white rounded-t-[2.5rem] sm:rounded-[2.5rem] shadow-2xl p-8 pb-10 overflow-hidden"
             >
               <div className="absolute top-0 left-0 w-full h-2 bg-primary-gradient" />
-              
+
               <div className="flex flex-col items-center text-center">
                 <div className="w-20 h-20 bg-emerald-50 text-emerald-500 rounded-3xl flex items-center justify-center mb-6 shadow-sm border border-emerald-100">
                   <ShieldCheck size={40} strokeWidth={1.5} />
                 </div>
-                
+
                 <h3 className="text-xl font-black text-slate-900 group-hover:text-primary transition-colors">Gorilla Scraper</h3>
                 <p className="text-slate-400 font-bold text-[10px] uppercase tracking-widest mb-8">Premium B2B Lead Hunting Engine</p>
-                
+
                 <p className="text-slate-500 text-sm mb-8 px-4">
                   Successfully secured <span className="text-primary font-bold">{stats.leads} leads</span>. Data has been encrypted and synced to the secure vault.
                 </p>
-                
+
                 <div className="w-full bg-slate-50 rounded-2xl p-5 mb-8 border border-slate-100 flex items-center justify-between text-left">
                   <div>
                     <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1">Commit Identifier</p>
@@ -738,15 +738,15 @@ export default function HunterPage() {
                     <p className="text-xs font-black text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md inline-block">SECURED</p>
                   </div>
                 </div>
-                
+
                 <div className="grid grid-cols-2 gap-3 w-full">
-                   <button 
+                  <button
                     onClick={() => setShowSuccessModal(false)}
                     className="py-4 rounded-2xl font-bold text-slate-500 bg-slate-100 hover:bg-slate-200 transition-all active:scale-95"
                   >
                     Dismiss
                   </button>
-                  <button 
+                  <button
                     onClick={() => window.location.href = `/vault?commit=${latestCommit?.id}`}
                     className="py-4 rounded-2xl font-bold text-white bg-slate-900 hover:bg-primary transition-all shadow-xl shadow-slate-900/10 active:scale-95 flex items-center justify-center gap-2"
                   >
@@ -762,7 +762,7 @@ export default function HunterPage() {
       <AnimatePresence>
         {showStopConfirm && (
           <div className="fixed inset-0 z-[120] flex items-center justify-center p-6">
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
               onClick={() => setShowStopConfirm(false)}
               className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
@@ -779,13 +779,13 @@ export default function HunterPage() {
                 Stopping now will lose the unsaved leads in the current session. Let the engine complete for best results. Still stop?
               </p>
               <div className="grid grid-cols-2 gap-3">
-                <button 
+                <button
                   onClick={() => setShowStopConfirm(false)}
                   className="py-3.5 bg-slate-100 text-slate-600 rounded-xl font-bold text-xs hover:bg-slate-200 transition-all"
                 >
                   KEEP RUNNING
                 </button>
-                <button 
+                <button
                   onClick={stopHunt}
                   className="py-3.5 bg-rose-500 text-white rounded-xl font-bold text-xs hover:bg-rose-600 shadow-lg shadow-rose-500/20 transition-all"
                 >

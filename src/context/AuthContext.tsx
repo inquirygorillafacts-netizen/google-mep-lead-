@@ -23,58 +23,67 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isSigningIn, setIsSigningIn] = useState(false);
 
   useEffect(() => {
-    let unsubscribeSnapshot: () => void;
-
-    const unsubscribeAuth = onAuthStateChanged(auth, async (currentUser) => {
-      try {
-        if (currentUser) {
-          // Initialize user document if not exists
-          const userRef = doc(db, "users", currentUser.uid);
-          const userSnap = await getDoc(userRef);
-
-          if (!userSnap.exists()) {
-            const initialData = {
-              uid: currentUser.uid,
-              email: currentUser.email,
-              displayName: currentUser.displayName,
-              photoURL: currentUser.photoURL,
-              plan: "free",
-              quota: 50,
-              usedQuota: 0,
-              expiryDate: null, // Free plan doesn't expire
-              createdAt: serverTimestamp(),
-              updatedAt: serverTimestamp(),
-            };
-            await setDoc(userRef, initialData);
-          }
-
-          // Setup real-time listener for user data
-          if (unsubscribeSnapshot) unsubscribeSnapshot();
-          unsubscribeSnapshot = onSnapshot(userRef, (doc) => {
-            if (doc.exists()) {
-              setUserData(doc.data());
-            }
-          });
-        } else {
-          setUserData(null);
-          if (unsubscribeSnapshot) unsubscribeSnapshot();
-        }
-        setUser(currentUser);
-      } catch (error) {
-        console.error("Auth initialization failed:", error);
-        // Fallback for user experience
+    const unsubscribeAuth = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+      // Fast-track the loading state. Once we know if the user is logged in or out,
+      // we can let the app continue. UserData will sync in the background.
+      setLoading(false);
+      
+      if (!currentUser) {
         setUserData(null);
-        setUser(null);
-      } finally {
-        setLoading(false);
       }
     });
 
+    return () => unsubscribeAuth();
+  }, []);
+
+  // Sync User Data in Background
+  useEffect(() => {
+    if (!user) {
+      setUserData(null);
+      return;
+    }
+
+    let unsubscribeSnapshot: () => void;
+
+    const syncUserData = async () => {
+      try {
+        const userRef = doc(db, "users", user.uid);
+        const userSnap = await getDoc(userRef);
+
+        if (!userSnap.exists()) {
+          const initialData = {
+            uid: user.uid,
+            email: user.email,
+            displayName: user.displayName,
+            photoURL: user.photoURL,
+            plan: "free",
+            quota: 50,
+            usedQuota: 0,
+            expiryDate: null,
+            createdAt: serverTimestamp(),
+            updatedAt: serverTimestamp(),
+          };
+          await setDoc(userRef, initialData);
+        }
+
+        // Setup real-time listener
+        unsubscribeSnapshot = onSnapshot(userRef, (doc) => {
+          if (doc.exists()) {
+            setUserData(doc.data());
+          }
+        });
+      } catch (error) {
+        console.error("Background data sync failed:", error);
+      }
+    };
+
+    syncUserData();
+
     return () => {
-      unsubscribeAuth();
       if (unsubscribeSnapshot) unsubscribeSnapshot();
     };
-  }, []);
+  }, [user]);
 
   const signInWithGoogle = async () => {
     if (isSigningIn) return;
