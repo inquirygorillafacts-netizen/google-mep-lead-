@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import crypto from "crypto";
-import { db } from "@/lib/firebase";
-import { doc, updateDoc, serverTimestamp } from "firebase/firestore";
+import { adminDb } from "@/lib/firebase-admin";
+import { FieldValue } from "firebase-admin/firestore";
 
 const FIREBASE_PROJECT_ID = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
 
@@ -60,17 +60,16 @@ export async function POST(req: Request) {
       const expiryDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
       
       try {
-        const userRef = doc(db, "users", userId);
-        await updateDoc(userRef, {
+        const userRef = adminDb.collection("users").doc(userId);
+        await userRef.update({
           plan: planName.toLowerCase(),
           quota: quota,
           expiryDate: expiryDate,
-          updatedAt: serverTimestamp()
+          updatedAt: FieldValue.serverTimestamp()
         });
         console.log(`Successfully updated plan for user ${userId} to ${planName}`);
       } catch (dbError) {
         console.error("Firestore update failed:", dbError);
-        // Even if DB update fails, we might still want to redirect, but log the error
       }
     }
     
