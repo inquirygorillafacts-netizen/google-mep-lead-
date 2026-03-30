@@ -19,7 +19,7 @@ export default function OnboardingSlides() {
     },
     {
       title: "Install App for Better Experience",
-      description: "Get instant notifications, offline access, and a faster interface by installing BharatPWA.",
+      description: "Get instant notifications, offline access, and a faster interface by installing LeadGorilla.",
       icon: <Download className="w-12 h-12 text-purple-500" />,
       color: "bg-purple-500/10",
     },

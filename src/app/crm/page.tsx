@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useAuth } from "@/context/AuthContext";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   Phone, 
@@ -30,7 +30,7 @@ import clsx from "clsx";
 import { useRouter } from "next/navigation";
 
 const FIREBASE_PROJECT_ID = "studio-3850868995-4f1cf";
-const FETCH_URL = `https://firestore.googleapis.com/v1/projects/${FIREBASE_PROJECT_ID}/databases/(default)/documents/spa_leads`;
+const FETCH_URL = `https://firestore.googleapis.com/v1/projects/${FIREBASE_PROJECT_ID}/databases/(default)/documents:runQuery`;
 
 const CRM_STATUSES = [
   { id: "all", label: "All Leads", icon: <Database size={14} />, color: "text-slate-500", bg: "bg-slate-50" },
@@ -50,30 +50,57 @@ export default function CRMPage() {
   const [selectedLeads, setSelectedLeads] = useState<Set<string>>(new Set());
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [showHighOpportunityOnly, setShowHighOpportunityOnly] = useState(false);
+  const { user } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
-    fetchLeads();
-  }, []);
+    if (user) {
+      fetchLeads();
+    }
+  }, [user]);
 
   const fetchLeads = async () => {
+    if (!user) return;
     setLoading(true);
     try {
-      const res = await fetch(FETCH_URL + "?pageSize=1000");
+      const query = {
+        structuredQuery: {
+          from: [{ collectionId: "spa_leads" }],
+          where: {
+            fieldFilter: {
+              field: { fieldPath: "userId" },
+              op: "EQUAL",
+              value: { stringValue: user.uid },
+            },
+          },
+        },
+      };
+
+      const res = await fetch(FETCH_URL, {
+        method: "POST",
+        body: JSON.stringify(query),
+      });
       const data = await res.json();
-      if (data.documents) {
-        const formatted = data.documents.map((doc: any) => ({
-          id: doc.name.split("/").pop(),
-          name: doc.fields.name?.stringValue || "N/A",
-          phone: doc.fields.phone?.stringValue || "N/A",
-          rating: doc.fields.rating?.stringValue || "0",
-          reviews: doc.fields.reviews?.integerValue || "0",
-          website: doc.fields.website?.stringValue || "",
-          crmStatus: doc.fields.crmStatus?.stringValue || "new",
-          notes: doc.fields.notes?.stringValue || "",
-          address: doc.fields.address?.stringValue || "N/A",
-          timestamp: doc.fields.timestamp?.timestampValue || "",
-        })).sort((a: any, b: any) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+      
+      if (Array.isArray(data)) {
+        const formatted = data
+          .filter((item: any) => item.document) // runQuery returns empty objects for no matches
+          .map((item: any) => {
+            const doc = item.document;
+            return {
+              id: doc.name.split("/").pop(),
+              name: doc.fields.name?.stringValue || "N/A",
+              phone: doc.fields.phone?.stringValue || "N/A",
+              rating: doc.fields.rating?.stringValue || "0",
+              reviews: doc.fields.reviews?.integerValue || "0",
+              website: doc.fields.website?.stringValue || "",
+              crmStatus: doc.fields.crmStatus?.stringValue || "new",
+              notes: doc.fields.notes?.stringValue || "",
+              address: doc.fields.address?.stringValue || "N/A",
+              timestamp: doc.fields.timestamp?.timestampValue || "",
+            };
+          })
+          .sort((a: any, b: any) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
         setLeads(formatted);
       }
     } catch (e) {

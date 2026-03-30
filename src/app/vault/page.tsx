@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useAuth } from "@/context/AuthContext";
 import { motion, AnimatePresence } from "framer-motion";
 import { Download, FileText, Table, Phone, MapPin, Star, ShieldCheck, ExternalLink, Search, Trash2, CheckCircle2, Send, Filter, CheckSquare, Square } from "lucide-react";
 import { exportToCSV, exportToExcel, exportToPDF, Lead } from "@/lib/utils/export";
@@ -8,7 +8,7 @@ import clsx from "clsx";
 import { useRouter, useSearchParams } from "next/navigation";
 
 const FIREBASE_PROJECT_ID = "studio-3850868995-4f1cf";
-const FETCH_URL = `https://firestore.googleapis.com/v1/projects/${FIREBASE_PROJECT_ID}/databases/(default)/documents/spa_leads`;
+const FETCH_URL = `https://firestore.googleapis.com/v1/projects/${FIREBASE_PROJECT_ID}/databases/(default)/documents:runQuery`;
 
 export default function VaultPage() {
   const [leads, setLeads] = useState<Lead[]>([]);
@@ -20,6 +20,7 @@ export default function VaultPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [showExportMenu, setShowExportMenu] = useState(false);
   const router = useRouter();
+  const { user } = useAuth();
   const searchParams = useSearchParams();
 
   useEffect(() => {
@@ -30,8 +31,10 @@ export default function VaultPage() {
   }, [searchParams]);
 
   useEffect(() => {
-    fetchData();
-  }, []);
+    if (user) {
+      fetchData();
+    }
+  }, [user]);
 
   const fetchData = async () => {
     setLoading(true);
@@ -40,19 +43,42 @@ export default function VaultPage() {
   };
 
   const fetchCommits = async () => {
-    const url = `https://firestore.googleapis.com/v1/projects/${FIREBASE_PROJECT_ID}/databases/(default)/documents/commits`;
+    if (!user) return;
     try {
-      const res = await fetch(url);
+      const query = {
+        structuredQuery: {
+          from: [{ collectionId: "commits" }],
+          where: {
+            fieldFilter: {
+              field: { fieldPath: "userId" },
+              op: "EQUAL",
+              value: { stringValue: user.uid },
+            },
+          },
+        },
+      };
+
+      const res = await fetch(FETCH_URL, {
+        method: "POST",
+        body: JSON.stringify(query),
+      });
       const data = await res.json();
-      if (data.documents) {
-        const formatted = data.documents.map((doc: any) => ({
-          id: doc.name.split("/").pop(),
-          category: doc.fields.category?.stringValue || "N/A",
-          city: doc.fields.city?.stringValue || "N/A",
-          state: doc.fields.state?.stringValue || "N/A",
-          count: doc.fields.leadCount?.integerValue || "0",
-          timestamp: doc.fields.timestamp?.timestampValue || "",
-        })).sort((a: any, b: any) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+      
+      if (Array.isArray(data)) {
+        const formatted = data
+          .filter((item: any) => item.document)
+          .map((item: any) => {
+            const doc = item.document;
+            return {
+              id: doc.name.split("/").pop(),
+              category: doc.fields.category?.stringValue || "N/A",
+              city: doc.fields.city?.stringValue || "N/A",
+              state: doc.fields.state?.stringValue || "N/A",
+              count: doc.fields.leadCount?.integerValue || "0",
+              timestamp: doc.fields.timestamp?.timestampValue || "",
+            };
+          })
+          .sort((a: any, b: any) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
         setCommits(formatted);
         if (formatted.length > 0 && !selectedCommitId) setSelectedCommitId(formatted[0].id);
       }
@@ -62,21 +88,44 @@ export default function VaultPage() {
   };
 
   const fetchLeads = async () => {
+    if (!user) return;
     try {
-      const res = await fetch(FETCH_URL + "?pageSize=1000");
+      const query = {
+        structuredQuery: {
+          from: [{ collectionId: "spa_leads" }],
+          where: {
+            fieldFilter: {
+              field: { fieldPath: "userId" },
+              op: "EQUAL",
+              value: { stringValue: user.uid },
+            },
+          },
+        },
+      };
+
+      const res = await fetch(FETCH_URL, {
+        method: "POST",
+        body: JSON.stringify(query),
+      });
       const data = await res.json();
-      if (data.documents) {
-        const formatted: Lead[] = data.documents.map((doc: any) => ({
-          Name: doc.fields.name?.stringValue || "N/A",
-          Phone: doc.fields.phone?.stringValue || "N/A",
-          Address: doc.fields.address?.stringValue || "N/A",
-          Rating: doc.fields.rating?.stringValue || "N/A",
-          Reviews: doc.fields.reviews?.integerValue || "0",
-          EstPrice: doc.fields.est_price?.stringValue || "N/A",
-          Status: doc.fields.status?.stringValue || "New",
-          commitId: doc.fields.commitId?.stringValue || "legacy",
-          id: doc.name.split("/").pop(),
-        }));
+      
+      if (Array.isArray(data)) {
+        const formatted: Lead[] = data
+          .filter((item: any) => item.document)
+          .map((item: any) => {
+            const doc = item.document;
+            return {
+              Name: doc.fields.name?.stringValue || "N/A",
+              Phone: doc.fields.phone?.stringValue || "N/A",
+              Address: doc.fields.address?.stringValue || "N/A",
+              Rating: doc.fields.rating?.stringValue || "N/A",
+              Reviews: doc.fields.reviews?.integerValue || "0",
+              EstPrice: doc.fields.est_price?.stringValue || "N/A",
+              Status: doc.fields.status?.stringValue || "New",
+              commitId: doc.fields.commitId?.stringValue || "legacy",
+              id: doc.name.split("/").pop(),
+            };
+          });
         setLeads(formatted);
       }
     } catch (e) {

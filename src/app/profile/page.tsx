@@ -9,9 +9,21 @@ import { useRouter } from "next/navigation";
 import { usePWA } from "@/context/PWAContext";
 
 export default function ProfilePage() {
-  const { user, logOut } = useAuth();
+  const { user, userData, logOut } = useAuth();
   const router = useRouter();
   const { installPWA, isInstallable } = usePWA();
+  
+  const getDaysRemaining = () => {
+    if (!userData?.expiryDate) return null;
+    const expiry = new Date(userData.expiryDate);
+    const now = new Date();
+    const diffTime = expiry.getTime() - now.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays > 0 ? diffDays : 0;
+  };
+
+  const daysRemaining = getDaysRemaining();
+  const isExpired = daysRemaining === 0 && userData?.plan !== "free";
   
   const [darkMode, setDarkMode] = useState(false);
   const [notifications, setNotifications] = useState(true);
@@ -86,14 +98,33 @@ export default function ProfilePage() {
               <Mail size={12} /> {user?.email || "No Email Provided"}
             </p>
 
-            <div className="bg-slate-50 rounded-2xl p-4 border border-slate-100 mb-6 group cursor-pointer hover:bg-slate-900 hover:text-white transition-all">
+            <div 
+              onClick={() => router.push("/pricing")}
+              className={clsx(
+                "rounded-2xl p-4 border mb-6 group cursor-pointer transition-all shadow-sm",
+                isExpired 
+                  ? "bg-rose-50 border-rose-100 hover:bg-rose-100" 
+                  : "bg-slate-50 border-slate-100 hover:bg-slate-900 hover:text-white"
+              )}
+            >
               <div className="flex items-center justify-between mb-2">
                 <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 group-hover:text-slate-500 transition-colors">Workspace Status</span>
-                <span className="text-[10px] font-black uppercase tracking-widest text-primary group-hover:text-primary-light">Enterprise</span>
+                <span className={clsx(
+                  "text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-md",
+                  userData?.plan === "free" ? "text-blue-500 bg-blue-50" : 
+                  isExpired ? "text-rose-500 bg-rose-100" : "text-primary bg-primary/10"
+                )}>
+                  {userData?.plan === "free" ? "Free" : isExpired ? "Expired" : "Active"}
+                </span>
               </div>
-              <div className="flex items-center gap-2 font-black text-sm">
-                <Crown size={18} className="text-primary" />
-                BharatPWA Pro Active
+              <div className="flex items-center justify-between font-black text-sm">
+                <div className="flex items-center gap-2">
+                  <Crown size={18} className={isExpired ? "text-rose-400" : "text-primary"} />
+                  <span className="capitalize">{userData?.plan || "Free"} Plan</span>
+                </div>
+                <span className="text-[10px] opacity-60">
+                  {userData?.plan === "free" ? "Permanent" : isExpired ? "Renew Now" : `${daysRemaining}d left`}
+                </span>
               </div>
             </div>
 

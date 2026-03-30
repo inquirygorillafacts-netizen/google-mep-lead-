@@ -11,8 +11,8 @@ import { PWAProvider } from "@/context/PWAContext";
 import { Suspense } from "react";
 
 export const metadata: Metadata = {
-  title: "BharatPWA - Lead Gen",
-  description: "B2B Lead Generation Tool",
+  title: "LeadGorilla Pro - Lead Gen",
+  description: "Premium B2B Lead Hunting Engine",
   manifest: "/manifest.json",
   icons: {
     icon: "/favicon.png",

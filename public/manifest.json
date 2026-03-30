@@ -1,7 +1,7 @@
 {
-  "name": "BharatPWA Leads",
-  "short_name": "BharatPWA",
-  "description": "B2B Lead Generation Scraper",
+  "name": "LeadGorilla Pro",
+  "short_name": "LeadGorilla",
+  "description": "Premium B2B Lead Hunting Engine",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#f2f2f7",

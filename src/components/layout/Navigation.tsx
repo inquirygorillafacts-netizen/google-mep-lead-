@@ -12,7 +12,6 @@ const navItems = [
   { name: "CRM", path: "/crm", icon: UserCircle2, color: "text-indigo-500" },
   { name: "Vault", path: "/vault", icon: Layers, color: "text-purple-500" },
   { name: "Campaigns", path: "/campaigns", icon: MessageSquare, color: "text-green-500" },
-  { name: "Pricing", path: "/pricing", icon: Wallet, color: "text-yellow-500" },
   { name: "Profile", path: "/profile", icon: User, color: "text-slate-500" },
 ];
 
@@ -87,11 +86,11 @@ export function Navigation() {
       {/* Desktop Sidebar (Premium SaaS Style) */}
       <nav className="hidden md:flex flex-col w-60 h-screen bg-white border-r border-slate-100 px-3 py-6 relative">
         <div className="mb-10 px-4 flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center overflow-hidden border border-slate-100 p-1.5 shadow-sm">
-            <img src="/logo.png" alt="BharatPWA Logo" className="w-full h-full object-contain" />
+          <div className="w-11 h-11 rounded-2xl bg-white flex items-center justify-center overflow-hidden border border-slate-100 p-0.5 shadow-sm">
+            <img src="/logo.png" alt="LeadGorilla Logo" className="w-full h-full object-contain" />
           </div>
           <h1 className="text-xl font-bold tracking-tight text-slate-900">
-            Bharat<span className="gradient-text">PWA</span>
+            Lead<span className="text-primary font-black">Gorilla</span>
           </h1>
         </div>
 

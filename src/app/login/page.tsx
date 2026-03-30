@@ -42,10 +42,10 @@ export default function LoginPage() {
             transition={{ duration: 0.6 }}
           >
             <div className="flex items-center gap-3 mb-8">
-              <div className="p-3 bg-blue-600 rounded-2xl shadow-lg shadow-blue-500/30">
-                <BarChart3 className="w-8 h-8 text-white" />
+              <div className="w-12 h-12 bg-white rounded-2xl shadow-lg flex items-center justify-center p-1">
+                <img src="/logo.png" alt="LeadGorilla" className="w-full h-full object-contain" />
               </div>
-              <span className="text-2xl font-bold tracking-tight">BharatPWA</span>
+              <span className="text-2xl font-black tracking-tight">LeadGorilla <span className="text-blue-500">Pro</span></span>
             </div>
             
             <h1 className="text-5xl lg:text-6xl font-extrabold mb-6 leading-tight">
@@ -86,7 +86,7 @@ export default function LoginPage() {
           >
             <div className="text-center mb-10">
               <h2 className="text-3xl font-bold text-white mb-3">Welcome Back</h2>
-              <p className="text-gray-400">Join 500+ businesses growing with BharatPWA</p>
+              <p className="text-gray-400">Join 500+ businesses growing with LeadGorilla</p>
             </div>
 
             <button

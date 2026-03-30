@@ -4,6 +4,8 @@ import React, { useState } from "react";
 import { Check, Shield, Zap, Rocket, Star, Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useAuth } from "@/context/AuthContext";
+import { Calendar, Clock, AlertCircle } from "lucide-react";
+import clsx from "clsx";
 
 const plans = [
   {
@@ -34,8 +36,20 @@ const plans = [
 ];
 
 export default function PricingPage() {
-  const { user } = useAuth();
+  const { user, userData } = useAuth();
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
+
+  const getDaysRemaining = () => {
+    if (!userData?.expiryDate) return null;
+    const expiry = new Date(userData.expiryDate);
+    const now = new Date();
+    const diffTime = expiry.getTime() - now.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays > 0 ? diffDays : 0;
+  };
+
+  const daysRemaining = getDaysRemaining();
+  const isExpired = daysRemaining === 0 && userData?.plan !== "free";
 
   const handlePayment = async (planName: string, amount: string) => {
     if (!user) {
@@ -56,11 +70,13 @@ export default function PricingPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           amount: numericAmount,
-          productinfo: `${planName} Plan - BharatPWA`,
+          productinfo: `${planName} Plan - LeadGorilla`,
           firstname: user?.displayName || "User",
-          email: user?.email || "test@bharatpwa.com",
+          email: user?.email || "test@leadgorilla.com",
           phone: "9999999999", // Mock phone or user's phone
-          txnid
+          txnid,
+          userId: user.uid,
+          planName
         })
       });
 
@@ -80,13 +96,15 @@ export default function PricingPage() {
         key: data.key,
         txnid: txnid,
         amount: numericAmount,
-        productinfo: `${planName} Plan - BharatPWA`,
+        productinfo: `${planName} Plan - LeadGorilla`,
         firstname: user?.displayName || "User",
-        email: user?.email || "test@bharatpwa.com",
+        email: user?.email || "test@leadgorilla.com",
         phone: "9999999999",
         surl: data.surl,
         furl: data.furl,
-        hash: data.hash
+        hash: data.hash,
+        udf1: user.uid,
+        udf2: planName
       };
 
       Object.entries(inputs).forEach(([key, value]) => {
@@ -116,6 +134,59 @@ export default function PricingPage() {
 
       <div className="max-w-6xl mx-auto">
         <div className="text-center mb-16">
+          {/* User Status Header */}
+          {userData && (
+            <motion.div 
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              className={clsx(
+                "inline-flex flex-wrap items-center justify-center gap-4 px-6 py-4 rounded-3xl border mb-8 transition-all shadow-sm",
+                isExpired ? "bg-rose-50 border-rose-200 text-rose-700" : "bg-white border-slate-100 text-slate-700"
+              )}
+            >
+              <div className="flex items-center gap-2 pr-4 border-r border-slate-200">
+                <div className={clsx(
+                  "w-8 h-8 rounded-full flex items-center justify-center",
+                  isExpired ? "bg-rose-100 text-rose-600" : "bg-blue-50 text-blue-600"
+                )}>
+                  {isExpired ? <AlertCircle size={16} /> : <Rocket size={16} />}
+                </div>
+                <div>
+                  <p className="text-[10px] font-black uppercase tracking-widest opacity-50 leading-none mb-1">Current Plan</p>
+                  <p className="text-sm font-black uppercase tracking-tight">
+                    {userData.plan === "free" ? "Free Tier" : userData.plan}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <div className={clsx(
+                  "w-8 h-8 rounded-full flex items-center justify-center",
+                  isExpired ? "bg-rose-100 text-rose-600" : "bg-emerald-50 text-emerald-600"
+                )}>
+                  <Clock size={16} />
+                </div>
+                <div>
+                  <p className="text-[10px] font-black uppercase tracking-widest opacity-50 leading-none mb-1">Status</p>
+                  <p className="text-sm font-black tracking-tight">
+                    {userData.plan === "free" 
+                      ? "Permanent Access" 
+                      : isExpired 
+                        ? "PLAN EXPIRED" 
+                        : `${daysRemaining} Days Remaining`}
+                  </p>
+                </div>
+              </div>
+
+              {isExpired && (
+                <div className="w-full mt-2 pt-2 border-t border-rose-100 flex items-center justify-center gap-2 text-[10px] font-bold">
+                  <AlertCircle size={12} />
+                  Sequence terminated. Please renew to continue lead extraction.
+                </div>
+              )}
+            </motion.div>
+          )}
+
           <motion.h1 
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -129,7 +200,7 @@ export default function PricingPage() {
             transition={{ delay: 0.1 }}
             className="text-slate-500 text-lg max-w-2xl mx-auto font-medium"
           >
-            Choose the perfect engine tier for your outreach. Over 500+ businesses rely on BharatPWA.
+            Choose the perfect engine tier for your outreach. Over 500+ businesses rely on LeadGorilla.
           </motion.p>
         </div>
 

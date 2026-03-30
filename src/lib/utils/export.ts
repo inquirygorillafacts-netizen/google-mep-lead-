@@ -44,7 +44,7 @@ export const exportToExcel = (leads: Lead[], filename = "Leads_Export") => {
 export const exportToPDF = (leads: Lead[], filename = "Leads_Export") => {
   if (!leads.length) return;
   const doc = new jsPDF();
-  doc.text("BharatPWA - Leads Export", 14, 15);
+  doc.text("LeadGorilla - Leads Export", 14, 15);
   
   const tableColumn = Object.keys(leads[0]);
   const tableRows = leads.map(lead => Object.values(lead) as string[]);

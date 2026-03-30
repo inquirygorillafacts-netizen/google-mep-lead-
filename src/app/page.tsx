@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Play, Pause, MapPin, Search, Activity, Target, Zap, Globe, Info, ShieldCheck, Database, Copy, Check, Sliders, Filter, Sparkles, AlertTriangle } from "lucide-react";
 import { State, City } from "country-state-city";
 import clsx from "clsx";
+import { useAuth } from "@/context/AuthContext";
 
 interface LogEntry {
   type: "info" | "success" | "error" | "warning" | "success-bold" | "highlight";
@@ -16,6 +17,7 @@ const INDIA_ISO = "IN";
 const STATES = State.getStatesOfCountry(INDIA_ISO);
 
 export default function HunterPage() {
+  const { user } = useAuth();
   const [selectedStateCode, setSelectedStateCode] = useState("");
   const [selectedDistrict, setSelectedDistrict] = useState("");
   const [area, setArea] = useState("");
@@ -91,6 +93,11 @@ export default function HunterPage() {
   }, [stats]);
 
   const startHunt = async () => {
+    if (!user) {
+      addLog("Please login to initialize the engine", "error");
+      return;
+    }
+
     if (!selectedStateCode || !selectedDistrict) {
       addLog("Please select target state and district", "error");
       return;
@@ -102,7 +109,12 @@ export default function HunterPage() {
     
     addLog(`🚀 Initializing Precision Target Engine for ${category}...`, "highlight");
     addLog(`📍 Location Scope: ${selectedDistrict}, ${selectedStateName}`, "info");
-    addLog("🛡️ Bypassing regional safety protocols...", "info");
+    const initialLogs = [
+      "Initializing Gorilla Engine v4.0.2...",
+      "Establishing encrypted tunnel...",
+      "Connection stabilized. Ready for target extraction.",
+    ];
+    initialLogs.forEach(l => addLog(l, "info"));
     
     try {
       const response = await fetch("/api/scrape", {
@@ -113,7 +125,8 @@ export default function HunterPage() {
           state: selectedStateName,
           district: selectedDistrict,
           goal: parseInt(goal) || 20,
-          filters // Pass user filters
+          filters, // Pass user filters
+          userId: user.uid
         }),
       });
 
@@ -169,12 +182,29 @@ export default function HunterPage() {
                 // Fetch latest commit to show in modal
                 setTimeout(async () => {
                   try {
-                    const res = await fetch(`https://firestore.googleapis.com/v1/projects/${FIREBASE_PROJECT_ID}/databases/(default)/documents/commits`);
+                    const query = {
+                      structuredQuery: {
+                        from: [{ collectionId: "commits" }],
+                        where: {
+                          fieldFilter: {
+                            field: { fieldPath: "userId" },
+                            op: "EQUAL",
+                            value: { stringValue: user.uid },
+                          },
+                        },
+                        orderBy: [{ field: { fieldPath: "timestamp" }, direction: "DESCENDING" }],
+                        limit: 1
+                      },
+                    };
+
+                    const res = await fetch(`https://firestore.googleapis.com/v1/projects/${FIREBASE_PROJECT_ID}/databases/(default)/documents:runQuery`, {
+                      method: "POST",
+                      body: JSON.stringify(query)
+                    });
                     const commitData = await res.json();
-                    if (commitData.documents && commitData.documents.length > 0) {
-                      const doc = commitData.documents.sort((a: any, b: any) => 
-                        new Date(b.createTime).getTime() - new Date(a.createTime).getTime()
-                      )[0];
+                    
+                    if (Array.isArray(commitData) && commitData[0]?.document) {
+                      const doc = commitData[0].document;
                       setLatestCommit({
                         id: doc.name.split("/").pop(),
                         count: statsRef.current.leads,
@@ -231,8 +261,12 @@ export default function HunterPage() {
             <Activity size={12} className={clsx(isHunting && "animate-pulse")} />
             System Status: {isHunting ? "Active" : "Idle"}
           </div>
-          <h1 className="text-3xl font-black tracking-tight text-slate-900 mb-1">Hunter Dashboard</h1>
-          <p className="text-slate-500 text-xs font-medium">Precision B2B Target Extraction Engine</p>
+          <h1 className="text-4xl md:text-5xl font-black text-slate-900 mb-2 leading-tight tracking-tight">
+            The <span className="text-primary italic">Gorilla</span> Engine
+          </h1>
+          <p className="text-slate-500 text-sm md:text-base font-medium max-w-lg">
+            Universal B2B data extraction for modern growth teams.
+          </p>
         </motion.div>
 
         <div className="flex items-center gap-3 bg-white p-1.5 rounded-xl shadow-sm border border-slate-100">
@@ -508,7 +542,7 @@ export default function HunterPage() {
                 </div>
                 <span className="text-xs font-black uppercase text-slate-100 tracking-[0.3em] font-mono flex items-center gap-2">
                    <ShieldCheck size={14} className="text-emerald-400" />
-                   ROOT@BHARAT-ENGINE: ~
+                   ROOT@GORILLA-ENGINE: ~
                 </span>
               </div>
               
@@ -576,7 +610,7 @@ export default function HunterPage() {
             <div className="px-6 py-4 border-t-2 border-slate-800 bg-[#131315] text-[11px] text-slate-400 font-black flex justify-between font-mono tracking-widest">
               <span className="flex items-center gap-2">
                 <span className="text-emerald-500">➜</span>
-                ROOT@BHARAT-ENGINE:~#
+                ROOT@GORILLA-ENGINE:~#
               </span>
               <span className="flex items-center gap-3">
                 <span className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
@@ -611,7 +645,9 @@ export default function HunterPage() {
                   <ShieldCheck size={40} strokeWidth={1.5} />
                 </div>
                 
-                <h2 className="text-2xl font-black text-slate-900 mb-2">Extraction Successful!</h2>
+                <h3 className="text-xl font-black text-slate-900 group-hover:text-primary transition-colors">Gorilla Scraper</h3>
+                <p className="text-slate-400 font-bold text-[10px] uppercase tracking-widest mb-8">Premium B2B Lead Hunting Engine</p>
+                
                 <p className="text-slate-500 text-sm mb-8 px-4">
                   Successfully secured <span className="text-primary font-bold">{stats.leads} leads</span>. Data has been encrypted and synced to the secure vault.
                 </p>

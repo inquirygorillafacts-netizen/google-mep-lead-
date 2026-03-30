@@ -13,8 +13,43 @@ interface Lead {
   Website: string | null;
 }
 
+// Helper to get User Data
+async function getUserData(userId: string) {
+  const url = `https://firestore.googleapis.com/v1/projects/${FIREBASE_PROJECT_ID}/databases/(default)/documents/users/${userId}`;
+  try {
+    const res = await fetch(url);
+    const data = await res.json();
+    if (!res.ok) return null;
+    return {
+      quota: parseInt(data.fields.quota?.integerValue || "0"),
+      usedQuota: parseInt(data.fields.usedQuota?.integerValue || "0"),
+      plan: data.fields.plan?.stringValue || "free",
+      expiryDate: data.fields.expiryDate?.stringValue || null
+    };
+  } catch {
+    return null;
+  }
+}
+
+// Helper to update User Used Quota
+async function updateUserUsedQuota(userId: string, newUsedQuota: number) {
+  const url = `https://firestore.googleapis.com/v1/projects/${FIREBASE_PROJECT_ID}/databases/(default)/documents/users/${userId}?updateMask.fieldPaths=usedQuota`;
+  const firestoreFormat = {
+    fields: {
+      usedQuota: { integerValue: String(newUsedQuota) },
+    },
+  };
+  try {
+    await fetch(url, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(firestoreFormat),
+    });
+  } catch {}
+}
+
 // Helper to save to Firestore via REST
-async function saveToFirestore(lead: Lead, commitId: string) {
+async function saveToFirestore(lead: Lead, commitId: string, userId: string) {
   const url = `https://firestore.googleapis.com/v1/projects/${FIREBASE_PROJECT_ID}/databases/(default)/documents/spa_leads`;
 
   const firestoreFormat = {
@@ -28,6 +63,7 @@ async function saveToFirestore(lead: Lead, commitId: string) {
       website: { stringValue: lead.Website || "" },
       crmStatus: { stringValue: "new" },
       commitId: { stringValue: commitId },
+      userId: { stringValue: userId },
       timestamp: { timestampValue: new Date().toISOString() },
       notes: { stringValue: "" }
     },
@@ -46,7 +82,7 @@ async function saveToFirestore(lead: Lead, commitId: string) {
   }
 }
 
-async function createCommit(commitId: string, category: string, city: string, state: string, goal: number) {
+async function createCommit(commitId: string, category: string, city: string, state: string, goal: number, userId: string) {
   const url = `https://firestore.googleapis.com/v1/projects/${FIREBASE_PROJECT_ID}/databases/(default)/documents/commits?documentId=${commitId}`;
 
   const firestoreFormat = {
@@ -56,6 +92,7 @@ async function createCommit(commitId: string, category: string, city: string, st
       state: { stringValue: state },
       goal: { integerValue: String(goal) },
       leadCount: { integerValue: "0" },
+      userId: { stringValue: userId },
       timestamp: { timestampValue: new Date().toISOString() },
     },
   };
@@ -93,8 +130,12 @@ async function updateCommitCount(commitId: string, count: number) {
 // SSE Route
 export async function POST(req: NextRequest) {
   try {
-    const { category, state, district, goal = 20, filters } = await req.json();
+    const { category, state, district, goal = 20, filters, userId } = await req.json();
     const city = district; // Legacy support or specific mapping
+    
+    if (!userId) {
+      return NextResponse.json({ error: "Missing User ID. Please login." }, { status: 401 });
+    }
     
     // Default Filter Logic: If disabled, everything is accepted
     const filterCfg = filters?.enabled ? filters : {
@@ -113,10 +154,28 @@ export async function POST(req: NextRequest) {
         }
 
         try {
-          if (!API_KEY) {
-            sendMsg("⚠️ KRIPYA APNA GOOGLE PLACES API KEY DALEIN.");
+
+          const userData = await getUserData(userId);
+          if (!userData) {
+            sendMsg("❌ User account not found. Please refresh and try again.");
             controller.close();
             return;
+          }
+
+          if (userData.usedQuota >= userData.quota) {
+            sendMsg(`⚠️ QUOTA EXHAUSTED: You have used ${userData.usedQuota}/${userData.quota} leads. Please upgrade your plan.`);
+            controller.close();
+            return;
+          }
+
+          // Expiry Check
+          if (userData.plan !== "free" && userData.expiryDate) {
+            const expiry = new Date(userData.expiryDate);
+            if (expiry < new Date()) {
+              sendMsg(`❌ PLAN EXPIRED: Your ${userData.plan} plan expired on ${expiry.toLocaleDateString()}. Please renew at profile -> billing.`);
+              controller.close();
+              return;
+            }
           }
 
           const query = `${category} in ${city}, ${state}`;
@@ -131,13 +190,22 @@ export async function POST(req: NextRequest) {
             sendMsg(`📡 [SYSTEM]: FULL SPECTRUM SCAN ACTIVE (Filters Disabled) 🌪️`);
           }
 
-          await createCommit(commitId, category, city, state, goal);
+          // Adjust goal if it exceeds remaining quota
+          const remainingQuota = userData.quota - userData.usedQuota;
+          const actualGoal = Math.min(goal, remainingQuota);
+          
+          if (actualGoal < goal) {
+            sendMsg(`ℹ️ Adjusting goal to ${actualGoal} based on your remaining quota.`);
+          }
+
+          await createCommit(commitId, category, city, state, actualGoal, userId);
 
           let collectedCounter = 0;
+          let currentUsedQuota = userData.usedQuota;
           let pageToken: string | null = null;
           let pageLoads = 0;
 
-          while (collectedCounter < goal && pageLoads < 5) {
+          while (collectedCounter < actualGoal && pageLoads < 5) {
             pageLoads++;
             let url = `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${encodeURIComponent(
               query
@@ -159,7 +227,7 @@ export async function POST(req: NextRequest) {
             }
 
             for (const place of results) {
-              if (collectedCounter >= goal) break;
+              if (collectedCounter >= actualGoal) break;
 
               const placeId = place.place_id;
               const rating = place.rating || 0;
@@ -198,11 +266,13 @@ export async function POST(req: NextRequest) {
 
                   sendMsg(`✅ FOUND: ${lead.Name} (${phone}) - Reviews: ${userRatingsTotal}`);
 
-                  const success = await saveToFirestore(lead, commitId);
+                  const success = await saveToFirestore(lead, commitId, userId);
                   if (success) {
                     collectedCounter++;
-                    sendMsg(`💾 SAVED: [${collectedCounter}/${goal}] Leads tagged to ${commitId}.`);
+                    currentUsedQuota++;
+                    sendMsg(`💾 SAVED: [${collectedCounter}/${actualGoal}] Leads tagged to ${commitId}.`);
                     await updateCommitCount(commitId, collectedCounter);
+                    await updateUserUsedQuota(userId, currentUsedQuota);
                   }
                 }
               }
