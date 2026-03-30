@@ -189,7 +189,7 @@ export default function ProfilePage() {
 
                 {/* Help Line */}
                 <a
-                  href="mailto:support@bharatpwa.com"
+                  href="mailto:support@leadgorilla.com"
                   className="p-3 bg-white rounded-2xl border border-slate-100 shadow-sm flex flex-col items-center justify-center gap-2 hover:bg-slate-50 transition-all active:scale-95 group"
                 >
                   <div className="w-10 h-10 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center group-hover:scale-110 transition-transform">
@@ -207,7 +207,7 @@ export default function ProfilePage() {
                     <div className="w-10 h-10 rounded-full bg-white text-blue-600 flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform">
                       <Download size={18} strokeWidth={2.5} />
                     </div>
-                    <span className="text-[10px] font-black text-blue-700 text-center leading-tight">Install<br/>BharatPWA</span>
+                    <span className="text-[10px] font-black text-blue-700 text-center leading-tight">Install<br/>LeadGorilla</span>
                   </button>
                 )}
 
@@ -232,7 +232,7 @@ export default function ProfilePage() {
 function HeaderNameDisplay({ name, isEditing, onEdit, onCancel, onSave, tempName, setTempName }: any) {
   if (isEditing) {
     return (
-      <div className="flexitems-center justify-center gap-2 mb-1 px-4">
+      <div className="flex items-center justify-center gap-2 mb-1 px-4">
         <input 
           autoFocus
           className="border-b-2 border-primary bg-transparent outline-none text-center text-xl font-black text-slate-900 w-full mb-2"
