@@ -16,6 +16,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isSigningIn, setIsSigningIn] = useState(false);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
@@ -26,10 +27,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const signInWithGoogle = async () => {
+    if (isSigningIn) return;
+    
+    setIsSigningIn(true);
     try {
       await signInWithPopup(auth, googleProvider);
-    } catch (error) {
-      console.error("Google Sign-In Error:", error);
+    } catch (error: any) {
+      // Don't log if the user cancelled or if another request took over
+      if (error.code !== "auth/cancelled-popup-request" && error.code !== "auth/popup-closed-by-user") {
+        console.error("Google Sign-In Error:", error);
+      }
+    } finally {
+      setIsSigningIn(false);
     }
   };
 

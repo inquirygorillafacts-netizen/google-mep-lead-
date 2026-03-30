@@ -39,8 +39,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body className="flex h-[100dvh] overflow-hidden bg-[--background] text-[--foreground]">
+    <html lang="en" suppressHydrationWarning>
+      <body className="flex h-[100dvh] overflow-hidden bg-[--background] text-[--foreground]" suppressHydrationWarning>
         <AuthProvider>
           <PWAProvider>
             <AuthGuard>

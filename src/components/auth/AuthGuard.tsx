@@ -20,7 +20,7 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
 
   if (loading) {
     return (
-      <div className="flex h-screen w-full flex-col items-center justify-center bg-background text-primary">
+      <div className="flex h-screen w-full flex-col items-center justify-center bg-background text-primary" suppressHydrationWarning>
         <ShieldCheck size={48} className="mb-4 animate-pulse" />
         <div className="h-6 w-6 animate-spin rounded-full border-4 border-primary border-t-transparent shadow-lg text-primary"></div>
         <p className="mt-4 text-xs font-bold uppercase tracking-widest text-slate-500">Authenticating</p>
