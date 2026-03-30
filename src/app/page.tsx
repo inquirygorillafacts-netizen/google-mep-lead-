@@ -85,7 +85,7 @@ export default function HunterPage() {
     ].slice(0, 50));
   };
 
-  const FIREBASE_PROJECT_ID = "studio-3850868995-4f1cf";
+  const FIREBASE_PROJECT_ID = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
   
   // Keep ref in sync with state for SSE access
   useEffect(() => {

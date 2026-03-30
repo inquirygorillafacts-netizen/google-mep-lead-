@@ -8,7 +8,7 @@ import { exportToCSV, exportToExcel, exportToPDF, Lead } from "@/lib/utils/expor
 import clsx from "clsx";
 import { useRouter, useSearchParams } from "next/navigation";
 
-const FIREBASE_PROJECT_ID = "studio-3850868995-4f1cf";
+const FIREBASE_PROJECT_ID = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
 const FETCH_URL = `https://firestore.googleapis.com/v1/projects/${FIREBASE_PROJECT_ID}/databases/(default)/documents:runQuery`;
 
 export default function VaultPage() {
@@ -124,6 +124,7 @@ export default function VaultPage() {
               EstPrice: doc.fields.est_price?.stringValue || "N/A",
               Status: doc.fields.status?.stringValue || "New",
               commitId: doc.fields.commitId?.stringValue || "legacy",
+              Website: doc.fields.website?.stringValue || "",
               id: doc.name.split("/").pop(),
             };
           });
@@ -293,22 +294,39 @@ export default function VaultPage() {
                   <button
                     onClick={() => setSelectedCommitId(commit.id)}
                     className={clsx(
-                      "px-3 py-1.5 rounded-lg text-[9px] font-bold transition-all border",
+                      "px-4 py-2.5 rounded-2xl transition-all border flex flex-col items-start gap-1 justify-center",
                       selectedCommitId === commit.id 
-                        ? "bg-slate-900 text-white border-slate-900 shadow-md" 
-                        : "bg-white text-slate-400 border-slate-100 hover:border-slate-300"
+                        ? "bg-white border-primary border-2 shadow-[0_8px_20px_-6px_rgba(37,99,235,0.15)] -translate-y-0.5" 
+                        : "bg-white text-slate-400 border-slate-100 hover:border-slate-300 hover:bg-slate-50"
                     )}
                   >
-                    <div className="flex flex-col items-start leading-tight">
-                      <span className="opacity-60 text-[8px] uppercase tracking-tighter">#{commits.length - idx}</span>
-                      <span className="truncate max-w-[100px] font-black">{commit.category}</span>
+                    <div className="flex items-center gap-2">
+                       <div className={clsx(
+                         "w-2 h-2 rounded-full",
+                         selectedCommitId === commit.id ? "bg-primary animate-pulse shadow-[0_0_8px_rgba(37,99,235,0.4)]" : "bg-slate-200"
+                       )} />
+                       <span className={clsx(
+                         "text-[10px] font-black uppercase tracking-widest leading-none",
+                         selectedCommitId === commit.id ? "text-slate-900" : "text-slate-400"
+                       )}>
+                         {commit.category}
+                       </span>
+                    </div>
+                    <div className="flex items-center gap-1.5 pl-4">
+                      <span className="text-[8px] font-bold uppercase tracking-widest opacity-60">
+                        Batch #{commits.length - idx}
+                      </span>
+                      <span className="text-[8px] opacity-30">•</span>
+                      <span className="text-[8px] font-bold opacity-60">
+                         {commit.count} Leads
+                      </span>
                     </div>
                   </button>
                   <button 
                     onClick={(e) => { e.stopPropagation(); deleteCommit(commit.id); }}
-                    className="absolute -top-1 -right-1 w-4 h-4 bg-rose-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center shadow-sm"
+                    className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-rose-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center shadow-lg hover:scale-110 z-10"
                   >
-                    <Trash2 size={8} />
+                    <Trash2 size={10} />
                   </button>
                 </div>
               ))}
@@ -379,11 +397,11 @@ export default function VaultPage() {
                       </div>
                       <div className="relative flex justify-between h-8 items-center bg-slate-50 rounded-full px-2 mt-3">
                         {/* Connecting Line */}
-                        <div className="absolute left-6 right-6 h-0.5 bg-slate-200 z-0" />
+                        <div className="absolute left-[8%] right-[8%] h-0.5 bg-slate-200 z-0" />
                         <motion.div 
                           initial={false}
-                          animate={{ width: `${(currentStageIdx / (STAGES.length - 1)) * 100}%` }}
-                          className="absolute left-6 h-0.5 bg-primary z-0 origin-left" 
+                          animate={{ width: `${(currentStageIdx / (STAGES.length - 1)) * 84}%` }}
+                          className="absolute left-[8%] h-0.5 bg-primary z-0 origin-left" 
                         />
                         
                         {STAGES.map((stage, idx) => {
@@ -430,11 +448,15 @@ export default function VaultPage() {
                     <div className="mt-4 flex gap-2">
                       <a
                         href={`tel:${lead.Phone}`}
-                        className="flex-1 flex items-center justify-center gap-1.5 py-2.5 bg-slate-900 text-white rounded-lg font-black text-[10px] uppercase tracking-widest hover:bg-primary transition-all active:scale-95 shadow-sm"
+                        className="flex-1 flex items-center justify-center gap-1.5 py-2.5 bg-primary text-white rounded-lg font-black text-[10px] uppercase tracking-widest hover:bg-primary-light transition-all active:scale-95 shadow-lg shadow-primary/20"
                       >
                         <Phone size={12} /> Call Lead
                       </a>
-                      <button className="w-10 h-10 flex items-center justify-center bg-slate-50 text-slate-400 rounded-lg hover:bg-slate-100 transition-all border border-slate-100">
+                      <button 
+                        onClick={() => lead.Website ? window.open(lead.Website, '_blank') : alert('No Maps link available')}
+                        className="w-10 h-10 flex items-center justify-center bg-slate-50 text-slate-400 rounded-lg hover:bg-slate-100 transition-all border border-slate-100"
+                        title="Open on Google Maps"
+                      >
                         <ExternalLink size={14} />
                       </button>
                     </div>
@@ -465,9 +487,9 @@ export default function VaultPage() {
             exit={{ y: 100, opacity: 0 }}
             className="fixed bottom-24 left-1/2 -translate-x-1/2 z-[80] w-[95%] max-w-xl mx-auto"
           >
-            <div className="bg-slate-900 text-white rounded-2xl p-3 pr-4 flex items-center justify-between shadow-2xl border border-slate-700 backdrop-blur-md bg-slate-900/95">
+            <div className="bg-white/90 text-slate-900 rounded-2xl p-3 pr-4 flex items-center justify-between shadow-2xl border border-white/60 backdrop-blur-xl">
               <div className="flex items-center gap-3 pl-2">
-                <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center font-black text-xs">
+                <div className="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center font-black text-xs">
                   {selectedLeads.size}
                 </div>
                 <div>

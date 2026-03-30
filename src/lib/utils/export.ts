@@ -12,6 +12,7 @@ export interface Lead {
   Status: string;
   id?: string;
   commitId?: string;
+  Website?: string;
 }
 
 export const exportToCSV = (leads: Lead[], filename = "Leads_Export") => {

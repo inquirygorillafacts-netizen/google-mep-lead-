@@ -24,7 +24,7 @@ import {
 import clsx from "clsx";
 import { useRouter } from "next/navigation";
 
-const FIREBASE_PROJECT_ID = "studio-3850868995-4f1cf";
+const FIREBASE_PROJECT_ID = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
 const FETCH_URL = `https://firestore.googleapis.com/v1/projects/${FIREBASE_PROJECT_ID}/databases/(default)/documents:runQuery`;
 
 const CRM_STATUSES = [
@@ -165,8 +165,8 @@ export default function CRMPage() {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-6">
         {[
           { label: "New Leads", count: leads.filter(l => l.crmStatus === 'new').length, color: "bg-blue-500" },
-          { label: "Contacted", count: leads.filter(l => l.crmStatus === 'contacted').length, color: "bg-purple-500" },
-          { label: "Qualified", count: leads.filter(l => l.crmStatus === 'interested').length, color: "bg-emerald-500" },
+          { label: "In Progress", count: leads.filter(l => ['contacted', 'follow_up', 'interested'].includes(l.crmStatus)).length, color: "bg-purple-500" },
+          { label: "Completed", count: leads.filter(l => l.crmStatus === 'paid').length, color: "bg-emerald-500" },
           { label: "Lost", count: leads.filter(l => l.crmStatus === 'rejected').length, color: "bg-rose-500" },
         ].map((stat) => (
           <div key={stat.label} className="bg-white p-3 flex items-center gap-3 rounded-xl border border-slate-100 shadow-sm">
@@ -256,8 +256,9 @@ function LeadCard({ lead, idx, isSelected, onToggle, onStatusUpdate, onNoteUpdat
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: idx * 0.02 }}
       className={clsx(
-        "bg-white rounded-xl border shadow-sm transition-all overflow-hidden",
-        isSelected ? "border-primary" : "border-slate-100"
+        "bg-white rounded-xl border shadow-sm transition-all relative",
+        isSelected ? "border-primary" : "border-slate-100",
+        showStatusMenu && "z-50"
       )}
     >
       <div className="p-3 flex items-center gap-4">

@@ -5,7 +5,7 @@ import { getAuth, GoogleAuthProvider } from "firebase/auth";
 const firebaseConfig = {
     apiKey: "AIzaSyDj0PKIiyaSjCaaXR06bPjmpgrZSMO4Izo",
     authDomain: "linky-qr.firebaseapp.com",
-    projectId: "linky-qr",
+    projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
     storageBucket: "linky-qr.firebasestorage.app",
     messagingSenderId: "653414355263",
     appId: "1:653414355263:web:b4672d29c971e8619a838a",

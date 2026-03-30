@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const FIREBASE_PROJECT_ID = "studio-3850868995-4f1cf";
+const FIREBASE_PROJECT_ID = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
 
 export async function PATCH(req: NextRequest) {
   try {

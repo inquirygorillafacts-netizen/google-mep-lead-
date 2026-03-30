@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-const FIREBASE_PROJECT_ID = "studio-3850868995-4f1cf";
+const FIREBASE_PROJECT_ID = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
 
 const PLAN_QUOTAS: Record<string, number> = {
   "Starter": 1000,
