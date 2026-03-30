@@ -8,24 +8,18 @@ import {
   MessageCircle, 
   Search, 
   Filter, 
-  ChevronRight, 
   ChevronDown, 
-  Plus, 
-  MoreVertical, 
   CheckCircle2, 
   Clock, 
   AlertCircle, 
   Database,
   Star,
   Globe,
-  Send,
-  User,
   Zap,
-  LayoutGrid,
-  List,
   CheckSquare,
   Square,
-  StickyNote
+  StickyNote,
+  Loader2
 } from "lucide-react";
 import clsx from "clsx";
 import { useRouter } from "next/navigation";
@@ -49,8 +43,6 @@ export default function CRMPage() {
   const [activeTab, setActiveTab] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedLeads, setSelectedLeads] = useState<Set<string>>(new Set());
-  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
-  const [showHighOpportunityOnly, setShowHighOpportunityOnly] = useState(false);
   const { user } = useAuth();
   const router = useRouter();
 
@@ -85,7 +77,7 @@ export default function CRMPage() {
       
       if (Array.isArray(data)) {
         const formatted = data
-          .filter((item: any) => item.document) // runQuery returns empty objects for no matches
+          .filter((item: any) => item.document) 
           .map((item: any) => {
             const doc = item.document;
             return {
@@ -138,17 +130,8 @@ export default function CRMPage() {
     const matchesTab = activeTab === "all" || l.crmStatus === activeTab;
     const matchesSearch = l.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
                          l.phone.includes(searchTerm);
-    const matchesHighOpp = !showHighOpportunityOnly || !l.website;
-    return matchesTab && matchesSearch && matchesHighOpp;
+    return matchesTab && matchesSearch;
   });
-
-  const toggleSelectAll = () => {
-    if (selectedLeads.size === filteredLeads.length) {
-      setSelectedLeads(new Set());
-    } else {
-      setSelectedLeads(new Set(filteredLeads.map(l => l.id)));
-    }
-  };
 
   const toggleSelect = (id: string) => {
     const next = new Set(selectedLeads);
@@ -157,127 +140,95 @@ export default function CRMPage() {
     setSelectedLeads(next);
   };
 
-  const startCampaign = () => {
-    const selected = leads.filter(l => selectedLeads.has(l.id)).map(l => l.phone).join(",");
-    router.push(`/campaigns?recipients=${selected}`);
-  };
-
   return (
-    <div className="min-h-full bg-slate-50/50 px-4 pt-10 md:pt-12 md:px-12 max-w-7xl mx-auto pb-32">
-      {/* Header Area */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 mb-8">
+    <div className="min-h-full bg-slate-50/50 px-3 pt-6 md:pt-8 md:px-10 max-w-6xl mx-auto pb-20">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
         <motion.div initial={{ x: -20, opacity: 0 }} animate={{ x: 0, opacity: 1 }}>
-          <h1 className="text-4xl font-black tracking-tight text-slate-900 mb-2">Freelancer CRM</h1>
-          <p className="text-slate-500 text-sm font-medium flex items-center gap-2">
-            <Zap size={14} className="text-primary fill-primary/20" />
-            Active Sales Pipeline & Lead Conversion
-          </p>
+          <h1 className="text-3xl font-black tracking-tighter text-slate-900 mb-1 leading-tight">CRM Pipeline</h1>
+          <p className="text-slate-500 text-xs font-semibold">Manage and nurture your extracted B2B leads.</p>
         </motion.div>
 
         <div className="flex items-center gap-3 w-full md:w-auto">
           <div className="relative flex-1 md:w-64 group">
-            <Search size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors" />
+            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
             <input 
               type="text"
               placeholder="Search leads..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full bg-white border border-slate-200 rounded-2xl py-3 pl-11 pr-4 text-sm font-bold shadow-sm outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary transition-all"
+              className="w-full bg-white border border-slate-200 rounded-xl py-2.5 pl-9 pr-4 text-xs font-bold shadow-sm outline-none focus:ring-2 focus:ring-primary/20 transition-all"
             />
           </div>
-          <button 
-            onClick={() => setViewMode(viewMode === "grid" ? "list" : "grid")}
-            className="p-3 bg-white border border-slate-200 rounded-2xl text-slate-500 hover:text-primary shadow-sm transition-all"
-          >
-            {viewMode === "grid" ? <List size={20} /> : <LayoutGrid size={20} />}
-          </button>
         </div>
       </div>
 
-      {/* Tabs & Filters */}
-      <div className="flex flex-col gap-6 mb-8">
-        <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none no-scrollbar">
-          {CRM_STATUSES.map(status => (
-            <button
-              key={status.id}
-              onClick={() => setActiveTab(status.id)}
-              className={clsx(
-                "flex items-center gap-2 px-4 py-2.5 rounded-full text-xs font-black uppercase tracking-widest whitespace-nowrap transition-all border",
-                activeTab === status.id 
-                  ? `${status.bg} ${status.color} border-current shadow-sm ring-1 ring-current/20`
-                  : "bg-white text-slate-400 border-slate-100 hover:border-slate-200"
-              )}
-            >
-              {status.icon}
-              {status.label}
-              <span className={clsx(
-                "ml-1.5 px-1.5 py-0.5 rounded-md text-[9px]",
-                activeTab === status.id ? "bg-white/50" : "bg-slate-50"
-              )}>
-                {leads.filter(l => status.id === "all" || l.crmStatus === status.id).length}
-              </span>
-            </button>
-          ))}
-        </div>
-
-        <div className="flex items-center justify-between">
-            <button
-              onClick={() => setShowHighOpportunityOnly(!showHighOpportunityOnly)}
-              className={clsx(
-                "flex items-center gap-3 px-5 py-3 rounded-2xl text-xs font-black uppercase tracking-widest transition-all border",
-                showHighOpportunityOnly 
-                  ? "bg-amber-500 text-white border-amber-600 shadow-lg shadow-amber-500/20"
-                  : "bg-white text-slate-600 border-slate-100 hover:border-slate-200"
-              )}
-            >
-              <Globe size={16} className={clsx(showHighOpportunityOnly ? "animate-pulse" : "")} />
-              {showHighOpportunityOnly ? "Targeting: No Website Only" : "Filter: Without Website"}
-            </button>
-
-            {selectedLeads.size > 0 && (
-              <motion.button
-                initial={{ scale: 0.9, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                onClick={startCampaign}
-                className="flex items-center gap-2 px-6 py-3 bg-primary text-white rounded-2xl text-sm font-black uppercase tracking-widest shadow-xl shadow-primary/20"
-              >
-                <Send size={16} />
-                Run Campaign ({selectedLeads.size})
-              </motion.button>
-            )}
-        </div>
-      </div>
-
-      {/* Leads Area */}
-      {loading ? (
-        <div className="flex flex-col items-center justify-center py-20 opacity-40">
-           <Zap className="w-12 h-12 text-primary animate-pulse mb-4" />
-           <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">Decrypting Pipeline Data...</p>
-        </div>
-      ) : (
-        <div className={clsx(
-          "grid gap-4",
-          viewMode === "grid" ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-3" : "grid-cols-1"
-        )}>
-          {filteredLeads.map((lead, idx) => (
-            <LeadCard 
-              key={lead.id} 
-              lead={lead} 
-              idx={idx} 
-              isSelected={selectedLeads.has(lead.id)}
-              onToggle={() => toggleSelect(lead.id)}
-              onStatusUpdate={(status: string) => updateStatus(lead.id, status)}
-              onNoteUpdate={(notes: string) => updateNotes(lead.id, notes)}
-            />
-          ))}
-          {filteredLeads.length === 0 && (
-            <div className="col-span-full py-20 text-center bg-white rounded-[2rem] border border-dashed border-slate-200">
-               <Database className="mx-auto w-12 h-12 text-slate-200 mb-4" />
-               <p className="text-slate-400 font-bold">No leads found in this category.</p>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-6">
+        {[
+          { label: "New Leads", count: leads.filter(l => l.crmStatus === 'new').length, color: "bg-blue-500" },
+          { label: "Contacted", count: leads.filter(l => l.crmStatus === 'contacted').length, color: "bg-purple-500" },
+          { label: "Qualified", count: leads.filter(l => l.crmStatus === 'interested').length, color: "bg-emerald-500" },
+          { label: "Lost", count: leads.filter(l => l.crmStatus === 'rejected').length, color: "bg-rose-500" },
+        ].map((stat) => (
+          <div key={stat.label} className="bg-white p-3 flex items-center gap-3 rounded-xl border border-slate-100 shadow-sm">
+            <div className={clsx("w-1 h-6 rounded-full", stat.color)} />
+            <div>
+              <p className="text-[8px] font-black uppercase text-slate-400 tracking-widest">{stat.label}</p>
+              <p className="text-sm font-black text-slate-900">{stat.count}</p>
             </div>
-          )}
+          </div>
+        ))}
+      </div>
+
+      <div className="flex flex-col md:flex-row gap-6">
+        <div className="md:w-64 space-y-4">
+          <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm space-y-4">
+            <div>
+              <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-2 px-1">Pipeline Stage</label>
+              <div className="flex flex-col gap-1">
+                {CRM_STATUSES.map((status) => (
+                  <button
+                    key={status.id}
+                    onClick={() => setActiveTab(status.id)}
+                    className={clsx(
+                      "text-left px-3 py-1.5 rounded-md text-[11px] font-bold transition-all capitalize flex items-center gap-2",
+                      activeTab === status.id ? "bg-primary text-white shadow-sm" : "text-slate-500 hover:bg-slate-50"
+                    )}
+                  >
+                    {status.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
         </div>
-      )}
+
+        <div className="flex-1">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+              <Filter className="text-primary" size={12} />
+              Lead Repository ({filteredLeads.length})
+            </h3>
+          </div>
+
+          <div className="space-y-2">
+            {loading ? (
+              <div className="py-20 text-center text-slate-400 text-xs">Loading leads...</div>
+            ) : (
+              filteredLeads.map((lead, idx) => (
+                <LeadCard 
+                  key={lead.id} 
+                  lead={lead} 
+                  idx={idx} 
+                  isSelected={selectedLeads.has(lead.id)}
+                  onToggle={() => toggleSelect(lead.id)}
+                  onStatusUpdate={(status: string) => updateStatus(lead.id, status)}
+                  onNoteUpdate={(notes: string) => updateNotes(lead.id, notes)}
+                />
+              ))
+            )}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
@@ -295,158 +246,116 @@ function LeadCard({ lead, idx, isSelected, onToggle, onStatusUpdate, onNoteUpdat
   const [showStatusMenu, setShowStatusMenu] = useState(false);
   const [showNotePad, setShowNotePad] = useState(false);
   const [noteText, setNoteText] = useState(lead.notes || "");
+  const [isUpdating, setIsUpdating] = useState(false);
 
   const activeStatus = CRM_STATUSES.find(s => s.id === lead.crmStatus) || CRM_STATUSES[1];
 
   return (
-    <motion.div
-      initial={{ y: 20, opacity: 0 }}
-      animate={{ y: 0, opacity: 1 }}
-      transition={{ delay: idx * 0.03 }}
+    <motion.div 
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: idx * 0.02 }}
       className={clsx(
-        "bg-white rounded-[2rem] p-6 shadow-xl border-2 transition-all relative overflow-hidden group",
-        isSelected ? "border-primary bg-primary/[0.02]" : "border-transparent",
-        !lead.website && "ring-1 ring-amber-500/10"
+        "bg-white rounded-xl border shadow-sm transition-all overflow-hidden",
+        isSelected ? "border-primary" : "border-slate-100"
       )}
     >
-       {!lead.website && (
-         <div className="absolute top-0 right-0 px-3 py-1 bg-amber-500 text-white text-[8px] font-black uppercase rounded-bl-xl shadow-sm z-10">
-           High Opportunity
-         </div>
-       )}
+      <div className="p-3 flex items-center gap-4">
+        <button onClick={onToggle} className={clsx("p-1", isSelected ? "text-primary" : "text-slate-200")}>
+          {isSelected ? <CheckSquare size={16} /> : <Square size={16} />}
+        </button>
+        
+        <div className="flex-1 min-w-0">
+          <h3 className="text-xs font-black text-slate-900 truncate">{lead.name}</h3>
+          <p className="text-[9px] text-slate-400 font-bold uppercase">{lead.address?.split(",")[0] || "No Address"}</p>
+        </div>
 
-       {parseFloat(lead.rating) >= 4.5 && parseInt(lead.reviews) >= 50 && (
-         <div className={clsx(
-           "absolute top-0 px-3 py-1 text-white text-[8px] font-black uppercase rounded-br-xl shadow-sm z-10",
-           lead.website ? "left-0 bg-indigo-600" : "left-0 bg-indigo-600"
-         )}>
-           High Value Client
-         </div>
-       )}
+        <div className="flex items-center gap-4">
+          <div className="text-[10px] font-bold text-slate-600 font-mono">{lead.phone || "No Number"}</div>
+          
+          <div className="relative">
+            <button 
+              onClick={() => setShowStatusMenu(!showStatusMenu)}
+              className={clsx(
+                "flex items-center gap-2 px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest border transition-all",
+                activeStatus.bg, activeStatus.color, "border-current/20"
+              )}
+            >
+              {isUpdating ? <Loader2 size={10} className="animate-spin" /> : activeStatus.label}
+              <ChevronDown size={10} className={clsx("transition-transform", showStatusMenu && "rotate-180")} />
+            </button>
 
-       <div className="flex items-start justify-between mb-4">
-          <div className="flex items-center gap-3">
-             <button onClick={onToggle} className={clsx("p-1.5 rounded-lg transition-colors", isSelected ? "text-primary" : "text-slate-200 hover:text-slate-300")}>
-                {isSelected ? <CheckSquare size={20} /> : <Square size={20} />}
-             </button>
-             <div>
-                <h3 className="text-lg font-black text-slate-900 leading-tight mb-0.5 line-clamp-1">{lead.name}</h3>
-                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{lead.address.split(",")[0]}</p>
-             </div>
+            <AnimatePresence>
+              {showStatusMenu && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  className="absolute right-0 mt-2 bg-white rounded-xl shadow-xl border border-slate-100 p-1 z-30 min-w-[120px]"
+                >
+                  {CRM_STATUSES.filter(s => s.id !== "all").map(s => (
+                    <button
+                      key={s.id}
+                      onClick={async () => {
+                        setIsUpdating(true);
+                        await onStatusUpdate(s.id);
+                        setIsUpdating(false);
+                        setShowStatusMenu(false);
+                      }}
+                      className={clsx(
+                        "w-full flex items-center px-3 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all",
+                        s.id === lead.crmStatus ? `${s.bg} ${s.color}` : "text-slate-500 hover:bg-slate-50"
+                      )}
+                    >
+                      {s.label}
+                    </button>
+                  ))}
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
-       </div>
 
-       <div className="flex items-center gap-4 mb-6">
-          <div className="flex-1 flex flex-col">
-             <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Lead Rating</span>
-             <div className="flex items-center gap-1">
-                <Star size={12} className="text-amber-500 fill-amber-500" />
-                <span className="text-xs font-black text-slate-700">{lead.rating}</span>
-                <span className="text-[10px] text-slate-400 font-bold">({lead.reviews})</span>
-             </div>
+          <div className="flex items-center gap-2">
+            <button 
+              onClick={() => setShowNotePad(!showNotePad)}
+              className={clsx(
+                "p-2 rounded-lg transition-all border",
+                showNotePad ? "bg-primary/10 border-primary text-primary" : "bg-slate-50 border-slate-100 text-slate-400 hover:text-primary"
+              )}
+            >
+              <StickyNote size={14} />
+            </button>
+            <a 
+              href={`tel:${lead.phone}`}
+              className="w-8 h-8 rounded-lg bg-emerald-500 text-white flex items-center justify-center shadow-sm hover:scale-105 active:scale-95 transition-all"
+            >
+              <Phone size={14} />
+            </a>
           </div>
-          <div className="flex-1 flex flex-col">
-             <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Web Status</span>
-             {lead.website ? (
-               <a href={lead.website} target="_blank" className="flex items-center gap-1 text-[10px] font-bold text-blue-500 hover:underline">
-                 <Globe size={12} /> View Site
-               </a>
-             ) : (
-               <div className="flex items-center gap-1 text-[10px] font-bold text-amber-500">
-                 <AlertCircle size={12} /> No Website
-               </div>
-             )}
-          </div>
-       </div>
+        </div>
+      </div>
 
-       <div className="grid grid-cols-2 gap-3 mb-6">
-          <a
-            href={`tel:${lead.phone}`}
-            className="flex items-center justify-center gap-2 py-3 bg-slate-50 hover:bg-slate-100 rounded-xl text-[11px] font-black text-slate-700 transition-all border border-slate-100 active:scale-95"
+      <AnimatePresence>
+        {showNotePad && (
+          <motion.div 
+            initial={{ height: 0, opacity: 0 }} 
+            animate={{ height: "auto", opacity: 1 }} 
+            exit={{ height: 0, opacity: 0 }}
+            className="px-3 pb-3 border-t border-slate-50"
           >
-             <Phone size={14} className="text-blue-500" />
-             Call Lead
-          </a>
-          <a
-            href={`https://wa.me/${lead.phone.replace(/\+/g, '').replace(/\s/g, '')}`}
-            target="_blank"
-            className="flex items-center justify-center gap-2 py-3 bg-green-50 hover:bg-green-100 rounded-xl text-[11px] font-black text-green-700 transition-all border border-green-100 active:scale-95"
-          >
-             <MessageCircle size={14} />
-             WhatsApp
-          </a>
-       </div>
-
-       <div className="relative">
-          <button 
-           onClick={() => setShowStatusMenu(!showStatusMenu)}
-           className={clsx(
-             "w-full flex items-center justify-between p-3 rounded-2xl transition-all border",
-             activeStatus.bg, activeStatus.color, "border-current/20"
-           )}
-          >
-             <div className="flex items-center gap-2">
-                {activeStatus.icon}
-                <span className="text-[10px] font-black uppercase tracking-widest">{activeStatus.label}</span>
-             </div>
-             <ChevronDown size={14} className={clsx("transition-transform", showStatusMenu && "rotate-180")} />
-          </button>
-
-          <AnimatePresence>
-            {showStatusMenu && (
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: 10 }}
-                className="absolute bottom-full left-0 right-0 mb-2 bg-white rounded-2xl shadow-2xl border border-slate-100 p-2 z-20"
-              >
-                 {CRM_STATUSES.filter(s => s.id !== "all").map(s => (
-                   <button
-                    key={s.id}
-                    onClick={() => {
-                      onStatusUpdate(s.id);
-                      setShowStatusMenu(false);
-                    }}
-                    className={clsx(
-                      "w-full flex items-center gap-3 p-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all",
-                      s.id === lead.crmStatus ? `${s.bg} ${s.color}` : "text-slate-500 hover:bg-slate-50"
-                    )}
-                   >
-                     {s.icon}
-                     {s.label}
-                   </button>
-                 ))}
-              </motion.div>
-            )}
-          </AnimatePresence>
-       </div>
-
-       <div className="mt-4 pt-4 border-t border-slate-50 flex items-center justify-between">
-          <button 
-            onClick={() => setShowNotePad(!showNotePad)}
-            className="text-[9px] font-black text-slate-400 uppercase hover:text-primary transition-colors flex items-center gap-2"
-          >
-             <StickyNote size={14} />
-             {lead.notes ? "Edit Note" : "Add Note"}
-          </button>
-          <span className="text-[8px] font-bold text-slate-300">
-            {new Date(lead.timestamp).toLocaleDateString()}
-          </span>
-       </div>
-
-       <AnimatePresence>
-          {showNotePad && (
-            <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} className="mt-3 overflow-hidden">
-               <textarea 
+            <div className="mt-3">
+              <textarea 
+                autoFocus
                 value={noteText}
                 onChange={(e) => setNoteText(e.target.value)}
                 onBlur={() => onNoteUpdate(noteText)}
                 className="w-full bg-slate-50 border border-slate-100 rounded-xl p-3 text-[10px] font-medium outline-none focus:border-primary transition-all h-20 placeholder:text-slate-300"
                 placeholder="Type lead specific notes here..."
-               />
-            </motion.div>
-          )}
-       </AnimatePresence>
+              />
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 }

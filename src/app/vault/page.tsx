@@ -195,30 +195,29 @@ export default function VaultPage() {
   });
 
   return (
-    <div className="min-h-full bg-background px-4 pt-10 md:pt-12 md:px-12 max-w-6xl mx-auto pb-20">
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8">
+    <div className="min-h-full bg-background px-3 pt-6 md:pt-8 md:px-10 max-w-6xl mx-auto pb-20">
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-6">
         <div>
-          <div className="flex items-center gap-2 mb-2 text-primary font-bold text-xs uppercase tracking-[0.2em]">
-            <ShieldCheck size={14} />
-            Secure Repository
+          <div className="flex items-center gap-1.5 mb-1 text-primary font-black text-[9px] uppercase tracking-widest">
+            <ShieldCheck size={12} />
+            Secure Vault
           </div>
-          <h1 className="text-4xl font-black tracking-tight text-slate-900 mb-1">The Vault</h1>
-          <p className="text-slate-500 text-sm font-medium">{leads.length} Verified B2B leads secured</p>
+          <h1 className="text-3xl font-black tracking-tighter text-slate-900 mb-0.5 leading-tight">Lead Vault</h1>
+          <p className="text-slate-500 text-[10px] font-bold">{leads.length} Records Verified</p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-3">
-          {/* Status Filters */}
-          <div className="flex bg-slate-100 p-1 rounded-xl">
-             {["All", "New", "Contacted", "Sample Sent", "Deal Closed"].map((s) => (
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="flex bg-slate-100 p-1 rounded-lg">
+             {["All", "New", "Outreach", "Won"].map((s) => (
                <button 
                 key={s}
-                onClick={() => setFilterStatus(s)}
+                onClick={() => setFilterStatus(s === "Won" ? "Deal Closed" : s === "Outreach" ? "Contacted" : s)}
                 className={clsx(
-                  "px-3 py-1.5 rounded-lg text-[10px] font-black uppercase transition-all",
-                  filterStatus === s ? "bg-white text-primary shadow-sm" : "text-slate-500 hover:text-slate-700"
+                  "px-2 py-1 rounded-md text-[9px] font-black uppercase transition-all",
+                  (filterStatus === s || (s === "Won" && filterStatus === "Deal Closed") || (s === "Outreach" && filterStatus === "Contacted")) ? "bg-white text-primary shadow-sm" : "text-slate-500 hover:text-slate-700"
                 )}
                >
-                 {s === "Sample Sent" ? "Sample" : s === "Deal Closed" ? "Won" : s}
+                 {s}
                </button>
              ))}
           </div>
@@ -237,9 +236,9 @@ export default function VaultPage() {
           <div className="relative">
             <button
               onClick={() => setShowExportMenu(!showExportMenu)}
-              className="bg-white border border-slate-200 text-slate-700 px-5 py-2.5 rounded-xl font-bold flex items-center text-sm hover:bg-slate-50 transition-all"
+              className="bg-white border border-slate-200 text-slate-700 px-3 py-2 rounded-lg font-black flex items-center text-[11px] uppercase tracking-widest hover:bg-slate-50 transition-all shadow-sm"
             >
-              <Download size={16} className="mr-2 text-primary" />
+              <Download size={14} className="mr-2 text-primary" />
               Export
             </button>
             <AnimatePresence>
@@ -287,29 +286,29 @@ export default function VaultPage() {
       ) : (
         <div className="space-y-8">
           {/* Selection Header */}
-          <div className="flex items-center justify-between pb-4 border-b border-slate-100">
-            <div className="flex items-center gap-4 overflow-x-auto no-scrollbar py-1">
+          <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+            <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-1">
               {commits.map((commit, idx) => (
-                <div key={commit.id} className="relative group">
+                <div key={commit.id} className="relative group shrink-0">
                   <button
                     onClick={() => setSelectedCommitId(commit.id)}
                     className={clsx(
-                      "px-4 py-2 rounded-xl text-xs font-bold transition-all border shrink-0",
+                      "px-3 py-1.5 rounded-lg text-[9px] font-bold transition-all border",
                       selectedCommitId === commit.id 
-                        ? "bg-slate-900 text-white border-slate-900 shadow-lg shadow-slate-900/10" 
-                        : "bg-white text-slate-500 border-slate-100 hover:border-slate-300"
+                        ? "bg-slate-900 text-white border-slate-900 shadow-md" 
+                        : "bg-white text-slate-400 border-slate-100 hover:border-slate-300"
                     )}
                   >
-                    <div className="flex flex-col items-start gap-0.5">
-                      <span className="opacity-70 text-[10px]">Commit #{commits.length - idx}</span>
-                      <span className="truncate max-w-[120px]">{commit.category} in {commit.city}</span>
+                    <div className="flex flex-col items-start leading-tight">
+                      <span className="opacity-60 text-[8px] uppercase tracking-tighter">#{commits.length - idx}</span>
+                      <span className="truncate max-w-[100px] font-black">{commit.category}</span>
                     </div>
                   </button>
                   <button 
                     onClick={(e) => { e.stopPropagation(); deleteCommit(commit.id); }}
-                    className="absolute -top-1 -right-1 w-5 h-5 bg-rose-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center shadow-sm"
+                    className="absolute -top-1 -right-1 w-4 h-4 bg-rose-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center shadow-sm"
                   >
-                    <Trash2 size={10} />
+                    <Trash2 size={8} />
                   </button>
                 </div>
               ))}
@@ -317,10 +316,10 @@ export default function VaultPage() {
 
             <button 
               onClick={toggleSelectAll}
-              className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-50 transition-colors shrink-0"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-black text-slate-400 hover:text-slate-600 transition-colors shrink-0 uppercase tracking-widest"
             >
-              {selectedLeads.size === filteredLeads.length && filteredLeads.length > 0 ? <CheckSquare size={16} className="text-primary" /> : <Square size={16} />}
-              Select All
+              {selectedLeads.size === filteredLeads.length && filteredLeads.length > 0 ? <CheckSquare size={14} className="text-primary" /> : <Square size={14} />}
+              All
             </button>
           </div>
 
@@ -334,39 +333,39 @@ export default function VaultPage() {
                   <motion.div
                     key={lead.id}
                     layout
-                    initial={{ opacity: 0, scale: 0.95 }}
+                    initial={{ opacity: 0, scale: 0.98 }}
                     animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.9 }}
+                    exit={{ opacity: 0, scale: 0.95 }}
                     className={clsx(
-                      "premium-card p-5 group flex flex-col h-full bg-white transition-all border-2",
-                      isSelected ? "border-primary shadow-xl shadow-primary/5" : "border-slate-100 hover:border-slate-200"
+                      "premium-card p-4 group flex flex-col h-full bg-white transition-all border",
+                      isSelected ? "border-primary ring-1 ring-primary/10" : "border-slate-100"
                     )}
                   >
-                    <div className="flex justify-between items-start mb-6">
-                      <div className="flex items-start gap-3 flex-1 min-w-0">
+                    <div className="flex justify-between items-start mb-4">
+                      <div className="flex items-start gap-2.5 flex-1 min-w-0">
                         <button 
                           onClick={() => toggleSelectLead(lead.id as string)}
                           className={clsx(
-                            "w-6 h-6 rounded-lg border-2 flex items-center justify-center shrink-0 transition-all mt-0.5",
-                            isSelected ? "bg-primary border-primary text-white" : "border-slate-200 hover:border-slate-300"
+                            "w-5 h-5 rounded-md border flex items-center justify-center shrink-0 transition-all mt-0.5",
+                            isSelected ? "bg-primary border-primary text-white" : "border-slate-200"
                           )}
                         >
-                          {isSelected && <CheckSquare size={14} />}
+                          {isSelected && <CheckSquare size={12} />}
                         </button>
                         <div className="min-w-0">
-                          <h3 className="font-extrabold text-slate-900 truncate pr-2 leading-tight" title={lead.Name}>
+                          <h3 className="font-extrabold text-slate-900 text-xs truncate leading-tight" title={lead.Name}>
                             {lead.Name}
                           </h3>
-                          <p className="text-[10px] font-black text-slate-400 flex items-center gap-1.5 mt-1 capitalize">
-                            <Star size={10} className="text-amber-400 fill-amber-400" /> {lead.Rating} • {lead.Reviews} Reviews
-                          </p>
+                          <div className="flex items-center gap-1 text-[9px] font-black text-slate-400 mt-1 uppercase tracking-tighter">
+                            <Star size={10} className="text-amber-400 fill-amber-400" /> {lead.Rating} • {lead.Reviews} REVS
+                          </div>
                         </div>
                       </div>
                       <button 
                         onClick={() => deleteLead(lead.id as string)}
-                        className="w-8 h-8 rounded-lg bg-rose-50 text-rose-500 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-rose-100"
+                        className="w-7 h-7 rounded-lg text-rose-300 hover:text-rose-500 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
                       >
-                        <Trash2 size={14} />
+                        <Trash2 size={12} />
                       </button>
                     </div>
 
@@ -412,31 +411,31 @@ export default function VaultPage() {
                       </div>
                     </div>
 
-                    <div className="space-y-4 flex-1">
-                      <div className="flex items-center text-sm font-bold text-slate-700">
-                        <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center mr-3 shrink-0">
-                          <Phone size={14} className="text-blue-500" />
+                    <div className="space-y-2.5 flex-1">
+                      <div className="flex items-center text-[11px] font-bold text-slate-700">
+                        <div className="w-7 h-7 rounded-lg bg-blue-50 flex items-center justify-center mr-2.5 shrink-0">
+                          <Phone size={12} className="text-blue-500" />
                         </div>
                         {lead.Phone}
                       </div>
                       
-                      <div className="flex items-start text-xs text-slate-500 leading-relaxed min-h-[40px]">
-                        <div className="w-8 h-8 rounded-lg bg-rose-50 flex items-center justify-center mr-3 shrink-0">
-                          <MapPin size={14} className="text-rose-500" />
+                      <div className="flex items-start text-[10px] text-slate-500 leading-tight min-h-[32px]">
+                        <div className="w-7 h-7 rounded-lg bg-rose-50 flex items-center justify-center mr-2.5 shrink-0">
+                          <MapPin size={12} className="text-rose-500" />
                         </div>
-                        <span className="line-clamp-2 mt-1">{lead.Address}</span>
+                        <span className="line-clamp-2 mt-0.5">{lead.Address}</span>
                       </div>
                     </div>
 
-                    <div className="mt-6 flex gap-2">
+                    <div className="mt-4 flex gap-2">
                       <a
                         href={`tel:${lead.Phone}`}
-                        className="flex-1 flex items-center justify-center gap-2 py-3 bg-slate-900 text-white rounded-2xl font-bold text-xs hover:bg-primary transition-all shadow-lg shadow-slate-900/10 active:scale-95"
+                        className="flex-1 flex items-center justify-center gap-1.5 py-2.5 bg-slate-900 text-white rounded-lg font-black text-[10px] uppercase tracking-widest hover:bg-primary transition-all active:scale-95 shadow-sm"
                       >
-                        <Phone size={14} /> Call Target
+                        <Phone size={12} /> Call Lead
                       </a>
-                      <button className="w-12 h-12 flex items-center justify-center bg-slate-50 text-slate-400 rounded-2xl hover:bg-slate-100 transition-all border border-slate-100">
-                        <ExternalLink size={16} />
+                      <button className="w-10 h-10 flex items-center justify-center bg-slate-50 text-slate-400 rounded-lg hover:bg-slate-100 transition-all border border-slate-100">
+                        <ExternalLink size={14} />
                       </button>
                     </div>
                   </motion.div>
@@ -466,31 +465,30 @@ export default function VaultPage() {
             exit={{ y: 100, opacity: 0 }}
             className="fixed bottom-24 left-1/2 -translate-x-1/2 z-[80] w-[95%] max-w-xl mx-auto"
           >
-            <div className="bg-slate-900 text-white rounded-[2rem] p-4 pr-6 flex items-center justify-between shadow-2xl border border-slate-800 backdrop-blur-md bg-slate-900/90">
-              <div className="flex items-center gap-4 pl-4">
-                <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center font-black text-sm">
+            <div className="bg-slate-900 text-white rounded-2xl p-3 pr-4 flex items-center justify-between shadow-2xl border border-slate-700 backdrop-blur-md bg-slate-900/95">
+              <div className="flex items-center gap-3 pl-2">
+                <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center font-black text-xs">
                   {selectedLeads.size}
                 </div>
-                <div className="hidden sm:block">
-                  <p className="font-black text-[13px] leading-tight">Leads Selected</p>
-                  <p className="text-[10px] text-slate-400 uppercase tracking-widest">Ready for action</p>
+                <div>
+                  <p className="font-black text-[11px] leading-tight">Selected</p>
+                  <p className="text-[8px] text-slate-400 uppercase tracking-widest">Leads</p>
                 </div>
               </div>
 
               <div className="flex items-center gap-2">
                 <button 
-                  onClick={() => { if(confirm("Delete selected leads?")) { setLeads(prev => prev.filter(l => !selectedLeads.has(l.id as string))); setSelectedLeads(new Set()); }}}
-                  className="p-3 bg-rose-500/10 text-rose-500 rounded-2xl hover:bg-rose-500/20 transition-all active:scale-90"
-                  title="Delete Selected"
+                  onClick={() => { if(confirm("Delete selected?")) { setLeads(prev => prev.filter(l => !selectedLeads.has(l.id as string))); setSelectedLeads(new Set()); }}}
+                  className="p-2.5 bg-rose-500/10 text-rose-500 rounded-xl hover:bg-rose-500/20 transition-all"
                 >
-                  <Trash2 size={20} />
+                  <Trash2 size={16} />
                 </button>
                 <button 
                   onClick={sendSelectedToCampaign}
-                  className="flex items-center gap-2 bg-primary text-white px-5 py-3 rounded-2xl font-black text-xs hover:bg-primary-light transition-all shadow-lg shadow-primary/20 active:scale-95"
+                  className="flex items-center gap-2 bg-primary text-white px-4 py-2.5 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-primary-light transition-all shadow-lg shadow-primary/20"
                 >
-                  <Send size={16} />
-                  Outreach Engine
+                  <Send size={14} />
+                  Outreach
                 </button>
               </div>
             </div>

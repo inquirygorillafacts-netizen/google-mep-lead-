@@ -231,6 +231,23 @@ export default function HunterPage() {
     }
   };
 
+  // Keyboard Shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
+        e.preventDefault();
+        if (isHunting) handleStopRequest();
+        else startHunt();
+      }
+      if ((e.ctrlKey || e.metaKey) && e.key === "k") {
+        e.preventDefault();
+        // Global search focus logic could go here or in layout
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isHunting, selectedStateCode, selectedDistrict, category, goal]);
+
   const handleStopRequest = () => {
     if (isHunting) {
       setShowStopConfirm(true);
@@ -251,32 +268,32 @@ export default function HunterPage() {
   };
 
   return (
-    <div className="min-h-full bg-background px-3 pt-6 md:pt-12 md:px-12 max-w-6xl mx-auto pb-24">
+    <div className="min-h-full bg-background px-3 pt-6 md:pt-8 md:px-10 max-w-6xl mx-auto pb-20">
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-3 mb-6">
         <motion.div
           initial={{ x: -20, opacity: 0 }}
           animate={{ x: 0, opacity: 1 }}
         >
-          <div className="flex items-center gap-2 mb-1.5 text-primary font-bold text-[10px] uppercase tracking-[0.2em]">
-            <Activity size={12} className={clsx(isHunting && "animate-pulse")} />
-            System Status: {isHunting ? "Active" : "Idle"}
+          <div className="flex items-center gap-1.5 mb-1 text-primary font-black text-[9px] uppercase tracking-[0.2em]">
+            <Activity size={10} className={clsx(isHunting && "animate-pulse")} />
+            System: {isHunting ? "Active" : "Idle"}
           </div>
-          <h1 className="text-4xl md:text-5xl font-black text-slate-900 mb-2 leading-tight tracking-tight">
-            The <span className="text-primary italic">Gorilla</span> Engine
+          <h1 className="text-3xl md:text-4xl font-black text-slate-900 mb-1 leading-tight tracking-tighter">
+            Gorilla <span className="text-primary">Engine</span>
           </h1>
-          <p className="text-slate-500 text-sm md:text-base font-medium max-w-lg">
-            Universal B2B data extraction for modern growth teams.
+          <p className="text-slate-500 text-xs font-semibold max-w-lg">
+            High-efficiency B2B data extraction for growth teams.
           </p>
         </motion.div>
 
-        <div className="flex items-center gap-3 bg-white p-1.5 rounded-xl shadow-sm border border-slate-100">
+        <div className="flex items-center gap-2 bg-white p-1 rounded-xl shadow-sm border border-slate-100">
           <div className="flex flex-col px-3 border-r border-slate-100">
-            <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Leads</span>
-            <span className="text-lg font-black text-primary">{stats.leads}</span>
+            <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Leads</span>
+            <span className="text-base font-black text-primary">{stats.leads}</span>
           </div>
           <div className="flex flex-col px-3">
-            <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Scanned</span>
-            <span className="text-lg font-black text-slate-900">{stats.scanned}</span>
+            <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Scanned</span>
+            <span className="text-base font-black text-slate-900">{stats.scanned}</span>
           </div>
         </div>
       </div>
@@ -287,22 +304,22 @@ export default function HunterPage() {
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 0.1 }}
-            className="premium-card p-3.5 md:p-5"
+            className="premium-card p-4"
           >
-            <div className="flex items-center justify-between mb-4 border-b border-slate-100 pb-3">
-               <h2 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] flex items-center gap-2">
-                 <Target size={14} className="text-primary" />
+            <div className="flex items-center justify-between mb-3 border-b border-slate-100 pb-2">
+               <h2 className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] flex items-center gap-2">
+                 <Target size={12} className="text-primary" />
                  Target Scope
                </h2>
                <button 
                 onClick={() => setShowFilters(!showFilters)}
                 className={clsx(
-                  "flex items-center gap-1.5 px-2 py-1 rounded-lg transition-all text-[9px] font-black uppercase tracking-widest border",
+                  "flex items-center gap-1 px-1.5 py-0.5 rounded-md transition-all text-[8px] font-black uppercase tracking-widest border",
                   showFilters ? "bg-primary/10 border-primary/20 text-primary" : "bg-slate-50 border-slate-200 text-slate-400 hover:text-slate-600"
                 )}
                >
-                 <Sliders size={12} />
-                 {showFilters ? "Close Filters" : "Filters"}
+                 <Sliders size={10} />
+                 {showFilters ? "Hide" : "Filter"}
                </button>
             </div>
 
@@ -409,21 +426,42 @@ export default function HunterPage() {
               )}
             </AnimatePresence>
 
+            {/* Workflow Presets */}
+            <div className="flex flex-wrap gap-2 mb-4">
+              {[
+                { name: "B2B Outreach", icon: <Globe size={10} />, cat: "Software Companies", g: 50 },
+                { name: "Local B2C", icon: <MapPin size={10} />, cat: "Restaurants", g: 100 },
+                { name: "Freelance Gig", icon: <Zap size={10} />, cat: "Interior Designers", g: 25 },
+              ].map((p) => (
+                <button
+                  key={p.name}
+                  onClick={() => {
+                    setCategory(p.cat);
+                    setGoal(p.g.toString());
+                  }}
+                  className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-slate-50 border border-slate-100 text-[10px] font-black text-slate-500 hover:bg-primary/5 hover:border-primary/20 hover:text-primary transition-all"
+                >
+                  {p.icon}
+                  {p.name}
+                </button>
+              ))}
+            </div>
+
             <div className="space-y-3">
-              <div className="grid grid-cols-2 gap-2 md:gap-3">
-                <div className="space-y-1.5">
-                  <label className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1">Target State</label>
+              <div className="grid grid-cols-2 gap-2">
+                <div className="space-y-1">
+                  <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest ml-1">Target State</label>
                   <div className="relative group">
-                    <MapPin size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors" />
+                    <MapPin size={12} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors" />
                     <select
                       value={selectedStateCode}
                       onChange={(e) => {
                         setSelectedStateCode(e.target.value);
                         setSelectedDistrict("");
                       }}
-                      className="w-full bg-slate-50 border border-slate-100 rounded-xl py-2 pl-9 pr-2 text-[11px] md:text-xs font-bold outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary transition-all appearance-none"
+                      className="w-full bg-slate-50 border border-slate-100 rounded-lg py-2 pl-8 pr-2 text-xs font-bold outline-none focus:border-primary transition-all appearance-none"
                     >
-                      <option value="">Select State</option>
+                      <option value="">State</option>
                       {STATES.map((s) => (
                         <option key={s.isoCode} value={s.isoCode}>{s.name}</option>
                       ))}
@@ -432,16 +470,16 @@ export default function HunterPage() {
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1">District</label>
+                  <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest ml-1">District</label>
                   <div className="relative group">
-                    <Globe size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors" />
+                    <Globe size={12} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors" />
                     <select
                       value={selectedDistrict}
                       onChange={(e) => setSelectedDistrict(e.target.value)}
                       disabled={!selectedStateCode}
-                      className="w-full bg-slate-50 border border-slate-100 rounded-xl py-2 pl-9 pr-2 text-[11px] md:text-xs font-bold outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary transition-all appearance-none disabled:opacity-50"
+                      className="w-full bg-slate-50 border border-slate-100 rounded-lg py-2 pl-8 pr-2 text-xs font-bold outline-none focus:border-primary transition-all appearance-none disabled:opacity-50"
                     >
-                      <option value="">Select District</option>
+                      <option value="">District</option>
                       {districts.map((d: string) => (
                         <option key={d} value={d}>{d}</option>
                       ))}
@@ -451,42 +489,42 @@ export default function HunterPage() {
               </div>
 
               <div className="space-y-1">
-                <label className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1">Area / Locality (Optional)</label>
+                <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest ml-1">Area / Locality (Optional)</label>
                 <div className="relative group">
-                  <Target size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors" />
+                  <Target size={12} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors" />
                   <input
                     type="text"
                     value={area}
                     onChange={(e) => setArea(e.target.value)}
-                    placeholder="e.g. Malviya Nagar, Vaishali"
-                    className="w-full bg-slate-50 border border-slate-100 rounded-xl py-2 pl-9 pr-2 text-[11px] md:text-xs font-bold outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary transition-all"
+                    placeholder="e.g. Vaishali, Malviya Nagar"
+                    className="w-full bg-slate-50 border border-slate-100 rounded-lg py-2 pl-8 pr-2 text-xs font-bold outline-none focus:border-primary transition-all"
                   />
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-2 md:gap-3">
+              <div className="grid grid-cols-2 gap-2">
                 <div className="space-y-1">
-                  <label className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1">Category</label>
+                  <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest ml-1">Category</label>
                   <div className="relative group">
-                    <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors" />
+                    <Search size={12} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors" />
                     <input
                       type="text"
                       value={category}
                       onChange={(e) => setCategory(e.target.value)}
-                      className="w-full bg-slate-50 border border-slate-100 rounded-xl py-2 pl-9 pr-2 text-[11px] md:text-xs font-bold outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary transition-all"
+                      className="w-full bg-slate-50 border border-slate-100 rounded-lg py-2 pl-8 pr-2 text-xs font-bold outline-none focus:border-primary transition-all"
                     />
                   </div>
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1">Leads Goal</label>
+                  <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest ml-1">Goal</label>
                   <div className="relative group">
-                    <Zap size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors" />
+                    <Zap size={12} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors" />
                     <input
                       type="number"
                       value={goal}
                       onChange={(e) => setGoal(e.target.value)}
-                      className="w-full bg-slate-50 border border-slate-100 rounded-xl py-2 pl-9 pr-2 text-[11px] md:text-xs font-bold outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary transition-all"
+                      className="w-full bg-slate-50 border border-slate-100 rounded-lg py-2 pl-8 pr-2 text-xs font-bold outline-none focus:border-primary transition-all"
                     />
                   </div>
                 </div>
@@ -532,72 +570,60 @@ export default function HunterPage() {
             transition={{ delay: 0.3 }}
             className="rounded-[2rem] bg-[#0A0A0B] border-4 border-slate-800 flex-1 flex flex-col overflow-hidden min-h-[550px] shadow-[0_0_50px_rgba(0,0,0,0.3)]"
           >
-            {/* Terminal Header - Very Visible */}
-            <div className="px-6 py-5 border-b-2 border-slate-800 flex items-center justify-between bg-[#131315]">
-              <div className="flex items-center gap-4">
-                <div className="flex gap-2">
-                  <div className="w-3.5 h-3.5 rounded-full bg-[#FF5F56] shadow-lg shadow-rose-500/20" />
-                  <div className="w-3.5 h-3.5 rounded-full bg-[#FFBD2E] shadow-lg shadow-amber-500/20" />
-                  <div className="w-3.5 h-3.5 rounded-full bg-[#27C93F] shadow-lg shadow-emerald-500/20" />
+            {/* Terminal Header - Professional Density */}
+            <div className="px-4 py-3 border-b-2 border-slate-800 flex items-center justify-between bg-[#131315]">
+              <div className="flex items-center gap-3">
+                <div className="flex gap-1.5">
+                  <div className="w-2.5 h-2.5 rounded-full bg-[#FF5F56]" />
+                  <div className="w-2.5 h-2.5 rounded-full bg-[#FFBD2E]" />
+                  <div className="w-2.5 h-2.5 rounded-full bg-[#27C93F]" />
                 </div>
-                <span className="text-xs font-black uppercase text-slate-100 tracking-[0.3em] font-mono flex items-center gap-2">
-                   <ShieldCheck size={14} className="text-emerald-400" />
-                   ROOT@GORILLA-ENGINE: ~
+                <span className="text-[9px] font-black uppercase text-slate-100 tracking-[0.2em] font-mono flex items-center gap-2">
+                   <ShieldCheck size={12} className="text-emerald-400" />
+                   ROOT@GORILLA-CORE
                 </span>
               </div>
               
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2">
                 <button 
                   onClick={copyLogs}
-                  className="flex items-center gap-2 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-100 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all border border-slate-700 shadow-sm mr-2"
+                  className="px-2 py-1 bg-slate-800 hover:bg-slate-700 text-slate-100 text-[8px] font-black uppercase tracking-widest rounded transition-all border border-slate-700 shadow-sm"
                 >
-                  {copied ? <Check size={12} className="text-emerald-400" /> : <Copy size={12} className="text-slate-400" />}
-                  {copied ? "COPIED" : "COPY LOGS"}
+                  {copied ? "COPIED" : "LOGS"}
                 </button>
                 {isHunting && (
-                  <>
-                    <span className="text-[10px] font-black text-emerald-400 animate-pulse uppercase tracking-widest font-mono">ENCRYPTED_STREAMING</span>
-                    <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping" />
-                  </>
+                  <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
                 )}
               </div>
             </div>
 
-            {/* Terminal Content - High Contrast Hacker Style */}
-            <div className="flex-1 overflow-y-auto p-6 font-mono text-[12px] leading-relaxed custom-scrollbar bg-black/40">
+            {/* Terminal Content - Fast Density */}
+            <div className="flex-1 overflow-y-auto p-4 font-mono text-[10px] leading-snug custom-scrollbar bg-black/40">
               <AnimatePresence initial={false}>
                 {logs.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center h-full text-slate-700 space-y-4">
-                    <Activity size={48} className="opacity-20" />
-                    <p className="text-xs uppercase tracking-[0.4em] font-black opacity-40">Awaiting Signal...</p>
+                  <div className="flex flex-col items-center justify-center h-full text-slate-700 space-y-2">
+                    <Activity size={32} className="opacity-10" />
+                    <p className="text-[8px] uppercase tracking-[0.3em] font-black opacity-30">Awaiting Cycle...</p>
                   </div>
                 ) : (
                   [...logs].map((log, idx) => {
-                    // Reverse index (0 is latest)
                     const isLatest = idx === 0;
-                    const isOld = idx > 10;
-                    
                     return (
                       <motion.div
                         key={idx}
-                        initial={{ opacity: 0, x: -20, scale: 0.95 }}
-                        animate={{ opacity: isOld ? 0.3 : 1, x: 0, scale: 1 }}
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
                         className={clsx(
-                          "mb-2.5 flex gap-4 font-mono transition-all duration-300",
-                          isLatest ? "text-cyan-400 font-black scale-105 origin-left" :
-                          log.type === "success" ? "text-[#a855f7]" : // Purple for success
-                          log.type === "success-bold" ? "text-[#ec4899] font-black bg-pink-500/5 py-2 px-3 rounded-xl border border-pink-500/20 mb-4 mt-2 whitespace-pre shadow-[0_0_15px_rgba(236,72,153,0.1)]" : // Pink
+                          "mb-1.5 flex gap-2 font-mono",
+                          isLatest ? "text-cyan-400 font-bold" :
+                          log.type === "success" ? "text-purple-400" : 
+                          log.type === "success-bold" ? "text-pink-400 font-bold border-l-2 border-pink-500 pl-2 my-2" :
                           log.type === "error" ? "text-rose-400" :
-                          log.type === "highlight" ? "text-sky-400 font-black underline decoration-sky-500/40" :
-                          log.type === "warning" ? "text-amber-400" :
-                          "text-[#22c55e]" // Neon Green for default
+                          "text-emerald-500/80"
                         )}
                       >
-                        <span className={clsx(
-                          "shrink-0 select-none px-1.5 py-0.5 rounded bg-slate-800/50 text-[10px] tracking-tighter",
-                          isLatest ? "text-cyan-200 bg-cyan-500/20" : "text-slate-500"
-                        )}>[{log.time}]</span>
-                        <span className="break-words leading-relaxed">{log.msg}</span>
+                        <span className="shrink-0 opacity-40 text-[8px]">[{log.time}]</span>
+                        <span className="break-words">{log.msg}</span>
                       </motion.div>
                     );
                   })
