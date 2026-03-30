@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { User as UserIcon, LogOut, CreditCard, ChevronRight, ShieldCheck, Zap, Mail, Crown, Settings, Bell, CircleHelp, Moon, Sun, CheckCircle2, Download } from "lucide-react";
+import { User as UserIcon, LogOut, CreditCard, ChevronRight, ShieldCheck, Zap, Mail, Crown, Settings, Bell, CircleHelp, Moon, Sun, CheckCircle2, Download, X, Phone, MessageSquare } from "lucide-react";
 import clsx from "clsx";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
@@ -30,6 +30,7 @@ export default function ProfilePage() {
   const [showEditName, setShowEditName] = useState(false);
   const [tempName, setTempName] = useState(user?.displayName || "");
   const [editSuccess, setEditSuccess] = useState(false);
+  const [showHelpDrawer, setShowHelpDrawer] = useState(false);
 
   const handleLogout = async () => {
     await logOut();
@@ -188,15 +189,15 @@ export default function ProfilePage() {
                 </button>
 
                 {/* Help Line */}
-                <a
-                  href="mailto:support@leadgorilla.com"
+                <button
+                  onClick={() => setShowHelpDrawer(true)}
                   className="p-3 bg-white rounded-2xl border border-slate-100 shadow-sm flex flex-col items-center justify-center gap-2 hover:bg-slate-50 transition-all active:scale-95 group"
                 >
                   <div className="w-10 h-10 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center group-hover:scale-110 transition-transform">
                     <CircleHelp size={18} strokeWidth={2.5} />
                   </div>
                   <span className="text-[10px] font-black text-slate-800 text-center leading-tight">Help<br/>Center</span>
-                </a>
+                </button>
 
                 {/* PWA Install */}
                 {isInstallable && (
@@ -225,6 +226,81 @@ export default function ProfilePage() {
             </motion.div>
           </div>
       </div>
+
+      <AnimatePresence>
+        {showHelpDrawer && (
+          <>
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowHelpDrawer(false)}
+              className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 transition-opacity"
+            />
+            
+            {/* Drawer */}
+            <motion.div
+              initial={{ y: "100%" }}
+              animate={{ y: 0 }}
+              exit={{ y: "100%" }}
+              transition={{ type: "spring", damping: 25, stiffness: 200 }}
+              className="fixed bottom-0 left-0 right-0 bg-white rounded-t-[32px] p-8 z-[60] shadow-2xl safe-area-bottom md:max-w-md md:mx-auto"
+            >
+              <div className="flex justify-between items-center mb-8">
+                <div>
+                  <h3 className="text-2xl font-black text-slate-900 leading-none mb-2">Help & Support</h3>
+                  <p className="text-slate-500 text-sm font-medium">How would you like to connect?</p>
+                </div>
+                <button 
+                  onClick={() => setShowHelpDrawer(false)}
+                  className="w-10 h-10 rounded-full bg-slate-50 text-slate-400 flex items-center justify-center hover:bg-slate-100 transition-colors"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+
+              <div className="grid grid-cols-1 gap-4">
+                <a
+                  href="tel:8302806913"
+                  className="flex items-center gap-4 p-5 bg-blue-50 rounded-2xl border border-blue-100 hover:bg-blue-100 transition-all group"
+                >
+                  <div className="w-12 h-12 rounded-xl bg-white text-blue-600 flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform">
+                    <Phone size={24} fill="currentColor" className="opacity-20 absolute" />
+                    <Phone size={24} strokeWidth={2.5} />
+                  </div>
+                  <div>
+                    <span className="block text-sm font-black text-blue-900">Call Us</span>
+                    <span className="text-xs font-bold text-blue-600/80">+91 8302806913</span>
+                  </div>
+                  <ChevronRight size={18} className="ml-auto text-blue-300" />
+                </a>
+
+                <a
+                  href="https://wa.me/918302806913"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-4 p-5 bg-green-50 rounded-2xl border border-green-100 hover:bg-green-100 transition-all group"
+                >
+                  <div className="w-12 h-12 rounded-xl bg-white text-green-600 flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform">
+                    <MessageSquare size={24} fill="currentColor" className="opacity-20 absolute" />
+                    <MessageSquare size={24} strokeWidth={2.5} />
+                  </div>
+                  <div>
+                    <span className="block text-sm font-black text-green-900">WhatsApp Support</span>
+                    <span className="text-xs font-bold text-green-600/80">Instant Chat</span>
+                  </div>
+                  <ChevronRight size={18} className="ml-auto text-green-300" />
+                </a>
+              </div>
+
+              <div className="mt-8 text-center">
+                <p className="text-[10px] font-black uppercase tracking-widest text-slate-300">Available 10 AM - 7 PM</p>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const API_KEY = "AIzaSyA87g86GEcAcJE3LTlNdBTnVvT2NocL5a4";
+const API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
 const FIREBASE_PROJECT_ID = "studio-3850868995-4f1cf";
 
 interface Lead {
