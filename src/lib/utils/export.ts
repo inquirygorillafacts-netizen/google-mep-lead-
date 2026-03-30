@@ -13,6 +13,7 @@ export interface Lead {
   id?: string;
   commitId?: string;
   Website?: string;
+  maps_url?: string;
 }
 
 export const exportToCSV = (leads: Lead[], filename = "Leads_Export") => {
