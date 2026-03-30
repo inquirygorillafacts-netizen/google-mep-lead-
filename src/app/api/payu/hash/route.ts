@@ -22,13 +22,16 @@ export async function POST(req: Request) {
     // Hash sequence: key|txnid|amount|productinfo|firstname|email|udf1|udf2|udf3|udf4|udf5||||||salt
     // udf1 = userId, udf2 = planName
     const cryp = crypto.createHash('sha512');
-    const text = `${PAYU_KEY}|${txnid}|${amount}|${productinfo}|${firstname}|${email}|${userId}|${planName}||||||||||${PAYU_SALT}`;
+    const text = `${PAYU_KEY}|${txnid}|${amount}|${productinfo}|${firstname}|${email}|${userId}|${planName}|||||||||${PAYU_SALT}`;
     cryp.update(text);
     const hash = cryp.digest('hex');
+
+    const PAYU_BASE_URL = process.env.PAYU_BASE_URL || "https://test.payu.in";
 
     return NextResponse.json({
       hash,
       key: PAYU_KEY,
+      action: `${PAYU_BASE_URL}/_payment`,
       surl: `${baseUrl}/api/payu/success`,
       furl: `${baseUrl}/api/payu/failure`,
     });

@@ -68,7 +68,12 @@ export default function ProfilePage() {
               <div className="w-24 h-24 bg-primary-gradient rounded-full p-1 shadow-xl shadow-primary/20">
                 <div className="w-full h-full bg-white rounded-full flex items-center justify-center text-primary text-3xl font-black overflow-hidden border-2 border-white">
                   {user?.photoURL ? (
-                    <img src={user.photoURL} alt="Avatar" className="w-full h-full object-cover" />
+                    <img 
+                      src={user.photoURL} 
+                      alt="Avatar" 
+                      className="w-full h-full object-cover" 
+                      referrerPolicy="no-referrer"
+                    />
                   ) : (
                     <span className="italic">{user?.displayName?.charAt(0) || "U"}</span>
                   )}

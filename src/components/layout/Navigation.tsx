@@ -200,7 +200,12 @@ export function Navigation() {
             <>
               <Link href="/profile" onClick={handleVibrate} className="flex items-center gap-2.5 p-2 rounded-xl bg-slate-50 border border-slate-100 hover:bg-slate-100 transition-colors">
                 <div className="w-8 h-8 rounded-full overflow-hidden border border-slate-200">
-                  <img src={user.photoURL || "/default-avatar.png"} alt="User" className="w-full h-full object-cover" />
+                  <img 
+                    src={user.photoURL || "/default-avatar.png"} 
+                    alt="User" 
+                    className="w-full h-full object-cover"
+                    referrerPolicy="no-referrer"
+                  />
                 </div>
                 <div className="flex-1 overflow-hidden">
                   <p className="text-[11px] font-black text-slate-900 truncate">{user.displayName || "User"}</p>

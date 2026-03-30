@@ -19,7 +19,9 @@ import {
   CheckSquare,
   Square,
   StickyNote,
-  Loader2
+  Loader2,
+  Trash2,
+  Trash
 } from "lucide-react";
 import clsx from "clsx";
 import { useRouter } from "next/navigation";
@@ -87,6 +89,7 @@ export default function CRMPage() {
               rating: doc.fields.rating?.stringValue || "0",
               reviews: doc.fields.reviews?.integerValue || "0",
               website: doc.fields.website?.stringValue || "",
+              maps_url: doc.fields.maps_url?.stringValue || "",
               crmStatus: doc.fields.crmStatus?.stringValue || "new",
               notes: doc.fields.notes?.stringValue || "",
               address: doc.fields.address?.stringValue || "N/A",
@@ -124,6 +127,38 @@ export default function CRMPage() {
      } catch (e) {
        console.error("Note update sync failed:", e);
      }
+  };
+
+  const [confirmModal, setConfirmModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    onConfirm: () => void;
+  }>({
+    isOpen: false,
+    title: "",
+    message: "",
+    onConfirm: () => {},
+  });
+
+  const openConfirm = (title: string, message: string, onConfirm: () => void) => {
+    setConfirmModal({ isOpen: true, title, message, onConfirm });
+  };
+
+  const closeConfirm = () => {
+    setConfirmModal(prev => ({ ...prev, isOpen: false }));
+  };
+
+  const deleteLead = async (id: string) => {
+    openConfirm(
+      "Remove CRM Lead?",
+      "Are you sure you want to delete this lead from your CRM? This action is permanent and will remove it from the database.",
+      async () => {
+        setLeads(prev => prev.filter(l => l.id !== id));
+        fetch(`/api/crm?id=${id}`, { method: "DELETE" });
+        closeConfirm();
+      }
+    );
   };
 
   const filteredLeads = leads.filter(l => {
@@ -223,12 +258,55 @@ export default function CRMPage() {
                   onToggle={() => toggleSelect(lead.id)}
                   onStatusUpdate={(status: string) => updateStatus(lead.id, status)}
                   onNoteUpdate={(notes: string) => updateNotes(lead.id, notes)}
+                  onDelete={() => deleteLead(lead.id)}
                 />
               ))
             )}
           </div>
         </div>
       </div>
+
+      {/* In-App Premium Confirmation Modal */}
+      <AnimatePresence>
+        {confirmModal.isOpen && (
+          <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={closeConfirm}
+              className="absolute inset-0 bg-slate-900/60 backdrop-blur-md"
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="relative w-full max-w-sm bg-white rounded-3xl p-8 shadow-2xl overflow-hidden border border-slate-100"
+            >
+              <div className="w-16 h-16 rounded-2xl bg-rose-50 text-rose-500 flex items-center justify-center mb-6">
+                <Trash2 size={32} />
+              </div>
+              <h3 className="text-2xl font-black text-slate-900 leading-tight mb-2">{confirmModal.title}</h3>
+              <p className="text-slate-500 text-sm font-medium leading-relaxed mb-8">{confirmModal.message}</p>
+              
+              <div className="flex gap-3">
+                <button 
+                  onClick={closeConfirm}
+                  className="flex-1 py-4 bg-slate-100 text-slate-500 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-slate-200 transition-all active:scale-95"
+                >
+                  Cancel
+                </button>
+                <button 
+                  onClick={confirmModal.onConfirm}
+                  className="flex-1 py-4 bg-rose-600 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-rose-700 transition-all active:scale-95 shadow-xl shadow-rose-600/20"
+                >
+                   Action
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
@@ -240,13 +318,28 @@ interface LeadCardProps {
   onToggle: () => void;
   onStatusUpdate: (status: string) => void;
   onNoteUpdate: (notes: string) => void;
+  onDelete: () => void;
 }
 
-function LeadCard({ lead, idx, isSelected, onToggle, onStatusUpdate, onNoteUpdate }: LeadCardProps) {
+function LeadCard({ lead, idx, isSelected, onToggle, onStatusUpdate, onNoteUpdate, onDelete }: LeadCardProps) {
   const [showStatusMenu, setShowStatusMenu] = useState(false);
   const [showNotePad, setShowNotePad] = useState(false);
   const [noteText, setNoteText] = useState(lead.notes || "");
   const [isUpdating, setIsUpdating] = useState(false);
+  const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
+
+  useEffect(() => {
+    if (noteText === lead.notes) return;
+    
+    setSaveStatus("saving");
+    const timer = setTimeout(() => {
+      onNoteUpdate(noteText);
+      setSaveStatus("saved");
+      setTimeout(() => setSaveStatus("idle"), 2000);
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  }, [noteText]);
 
   const activeStatus = CRM_STATUSES.find(s => s.id === lead.crmStatus) || CRM_STATUSES[1];
 
@@ -323,9 +416,26 @@ function LeadCard({ lead, idx, isSelected, onToggle, onStatusUpdate, onNoteUpdat
                 "p-2 rounded-lg transition-all border",
                 showNotePad ? "bg-primary/10 border-primary text-primary" : "bg-slate-50 border-slate-100 text-slate-400 hover:text-primary"
               )}
+              title="Add Note"
             >
               <StickyNote size={14} />
             </button>
+            <button 
+              onClick={onDelete}
+              className="p-2 rounded-lg bg-slate-50 border border-slate-100 text-slate-400 hover:text-rose-500 hover:bg-rose-50 hover:border-rose-100 transition-all"
+              title="Delete Lead"
+            >
+              <Trash2 size={14} />
+            </button>
+            <a 
+              href={lead.maps_url} 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="p-2 rounded-lg bg-slate-50 border border-slate-100 text-slate-400 hover:text-blue-500 hover:bg-blue-50 hover:border-blue-100 transition-all"
+              title="Open Google My Business Profile"
+            >
+              <Globe size={14} />
+            </a>
             <a 
               href={`tel:${lead.phone}`}
               className="w-8 h-8 rounded-lg bg-emerald-500 text-white flex items-center justify-center shadow-sm hover:scale-105 active:scale-95 transition-all"
@@ -344,15 +454,28 @@ function LeadCard({ lead, idx, isSelected, onToggle, onStatusUpdate, onNoteUpdat
             exit={{ height: 0, opacity: 0 }}
             className="px-3 pb-3 border-t border-slate-50"
           >
-            <div className="mt-3">
+             <div className="mt-3 relative">
               <textarea 
                 autoFocus
                 value={noteText}
                 onChange={(e) => setNoteText(e.target.value)}
-                onBlur={() => onNoteUpdate(noteText)}
                 className="w-full bg-slate-50 border border-slate-100 rounded-xl p-3 text-[10px] font-medium outline-none focus:border-primary transition-all h-20 placeholder:text-slate-300"
                 placeholder="Type lead specific notes here..."
               />
+              <div className="absolute bottom-2 right-3 flex items-center gap-1.5 pointer-events-none">
+                {saveStatus === "saving" && (
+                  <>
+                    <Loader2 size={10} className="animate-spin text-primary" />
+                    <span className="text-[8px] font-black uppercase tracking-tighter text-primary">Saving...</span>
+                  </>
+                )}
+                {saveStatus === "saved" && (
+                  <>
+                    <CheckCircle2 size={10} className="text-emerald-500" />
+                    <span className="text-[8px] font-black uppercase tracking-tighter text-emerald-500">Saved</span>
+                  </>
+                )}
+              </div>
             </div>
           </motion.div>
         )}

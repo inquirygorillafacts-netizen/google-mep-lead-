@@ -11,6 +11,7 @@ interface Lead {
   Address: string;
   Est_Price: string;
   Website: string | null;
+  MapsUrl: string;
 }
 
 // Helper to get User Data
@@ -61,6 +62,7 @@ async function saveToFirestore(lead: Lead, commitId: string, userId: string) {
       address: { stringValue: lead.Address },
       est_price: { stringValue: lead.Est_Price },
       website: { stringValue: lead.Website || "" },
+      maps_url: { stringValue: lead.MapsUrl || "" },
       crmStatus: { stringValue: "new" },
       commitId: { stringValue: commitId },
       userId: { stringValue: userId },
@@ -238,7 +240,7 @@ export async function POST(req: NextRequest) {
               const reviewsPass = userRatingsTotal >= filterCfg.minReviews;
               
               if (ratingPass && reviewsPass) {
-                const detailsUrl = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=name,formatted_phone_number,website,formatted_address&key=${API_KEY}`;
+                const detailsUrl = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=name,formatted_phone_number,website,formatted_address,url&key=${API_KEY}`;
                 
                 const detailRes = await fetch(detailsUrl);
                 const detailData = await detailRes.json();
@@ -262,6 +264,7 @@ export async function POST(req: NextRequest) {
                     Address: details.formatted_address || place.formatted_address || "N/A",
                     Est_Price: estPrice,
                     Website: website || null,
+                    MapsUrl: details.url || `https://www.google.com/maps/place/?q=place_id:${placeId}`
                   };
 
                   sendMsg(`✅ FOUND: ${lead.Name} (${phone}) - Reviews: ${userRatingsTotal}`);

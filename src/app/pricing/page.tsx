@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Check, Shield, Zap, Rocket, Star, Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useAuth } from "@/context/AuthContext";
@@ -38,6 +38,18 @@ const plans = [
 export default function PricingPage() {
   const { user, userData } = useAuth();
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
+
+  useEffect(() => {
+    // We handle the UI feedback via the global PaymentStatusModal component
+    // which listens to these query parameters. No need for browser alerts.
+    const urlParams = new URLSearchParams(window.location.search);
+    const paymentStatus = urlParams.get('payment');
+    
+    if (paymentStatus) {
+      // Logic to clear URL if needed, or just let the Modal handle it
+      // window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  }, []);
 
   const getDaysRemaining = () => {
     if (!userData?.expiryDate) return null;
@@ -86,9 +98,9 @@ export default function PricingPage() {
         throw new Error(data.error || "Failed to generate hash");
       }
 
-      // 3. Create a form dynamically and submit to PayU Test Environment
+      // 3. Create a form dynamically and submit to PayU Environment
       const form = document.createElement("form");
-      form.setAttribute("action", "https://test.payu.in/_payment");
+      form.setAttribute("action", data.action);
       form.setAttribute("method", "POST");
       form.style.display = "none";
 
@@ -99,7 +111,7 @@ export default function PricingPage() {
         productinfo: `${planName} Plan - LeadGorilla`,
         firstname: user?.displayName || "User",
         email: user?.email || "test@leadgorilla.com",
-        phone: "9999999999",
+        phone: userData?.phone || "9999999999",
         surl: data.surl,
         furl: data.furl,
         hash: data.hash,

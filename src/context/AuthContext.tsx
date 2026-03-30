@@ -26,39 +26,48 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     let unsubscribeSnapshot: () => void;
 
     const unsubscribeAuth = onAuthStateChanged(auth, async (currentUser) => {
-      if (currentUser) {
-        // Initialize user document if not exists
-        const userRef = doc(db, "users", currentUser.uid);
-        const userSnap = await getDoc(userRef);
+      try {
+        if (currentUser) {
+          // Initialize user document if not exists
+          const userRef = doc(db, "users", currentUser.uid);
+          const userSnap = await getDoc(userRef);
 
-        if (!userSnap.exists()) {
-          const initialData = {
-            uid: currentUser.uid,
-            email: currentUser.email,
-            displayName: currentUser.displayName,
-            photoURL: currentUser.photoURL,
-            plan: "free",
-            quota: 50,
-            usedQuota: 0,
-            expiryDate: null, // Free plan doesn't expire
-            createdAt: serverTimestamp(),
-            updatedAt: serverTimestamp(),
-          };
-          await setDoc(userRef, initialData);
-        }
-
-        // Setup real-time listener for user data
-        unsubscribeSnapshot = onSnapshot(userRef, (doc) => {
-          if (doc.exists()) {
-            setUserData(doc.data());
+          if (!userSnap.exists()) {
+            const initialData = {
+              uid: currentUser.uid,
+              email: currentUser.email,
+              displayName: currentUser.displayName,
+              photoURL: currentUser.photoURL,
+              plan: "free",
+              quota: 50,
+              usedQuota: 0,
+              expiryDate: null, // Free plan doesn't expire
+              createdAt: serverTimestamp(),
+              updatedAt: serverTimestamp(),
+            };
+            await setDoc(userRef, initialData);
           }
-        });
-      } else {
+
+          // Setup real-time listener for user data
+          if (unsubscribeSnapshot) unsubscribeSnapshot();
+          unsubscribeSnapshot = onSnapshot(userRef, (doc) => {
+            if (doc.exists()) {
+              setUserData(doc.data());
+            }
+          });
+        } else {
+          setUserData(null);
+          if (unsubscribeSnapshot) unsubscribeSnapshot();
+        }
+        setUser(currentUser);
+      } catch (error) {
+        console.error("Auth initialization failed:", error);
+        // Fallback for user experience
         setUserData(null);
-        if (unsubscribeSnapshot) unsubscribeSnapshot();
+        setUser(null);
+      } finally {
+        setLoading(false);
       }
-      setUser(currentUser);
-      setLoading(false);
     });
 
     return () => {

@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { motion, AnimatePresence } from "framer-motion";
-import { Download, FileText, Table, Phone, MapPin, Star, ShieldCheck, ExternalLink, Search, Trash2, CheckCircle2, Send, Filter, CheckSquare, Square } from "lucide-react";
+import { Download, FileText, Table, Phone, MapPin, Star, ShieldCheck, ExternalLink, Search, Trash2, CheckCircle2, Send, Filter, CheckSquare, Square, Database } from "lucide-react";
 import { exportToCSV, exportToExcel, exportToPDF, Lead } from "@/lib/utils/export";
 import clsx from "clsx";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -14,6 +14,25 @@ const FETCH_URL = `https://firestore.googleapis.com/v1/projects/${FIREBASE_PROJE
 export default function VaultPage() {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [selectedLeads, setSelectedLeads] = useState<Set<string>>(new Set());
+  const [confirmModal, setConfirmModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    onConfirm: () => void;
+  }>({
+    isOpen: false,
+    title: "",
+    message: "",
+    onConfirm: () => {},
+  });
+
+  const openConfirm = (title: string, message: string, onConfirm: () => void) => {
+    setConfirmModal({ isOpen: true, title, message, onConfirm });
+  };
+
+  const closeConfirm = () => {
+    setConfirmModal(prev => ({ ...prev, isOpen: false }));
+  };
   const [filterStatus, setFilterStatus] = useState("All");
   const [loading, setLoading] = useState(true);
   const [commits, setCommits] = useState<any[]>([]);
@@ -125,6 +144,7 @@ export default function VaultPage() {
               Status: doc.fields.status?.stringValue || "New",
               commitId: doc.fields.commitId?.stringValue || "legacy",
               Website: doc.fields.website?.stringValue || "",
+              maps_url: doc.fields.maps_url?.stringValue || "",
               id: doc.name.split("/").pop(),
             };
           });
@@ -142,16 +162,30 @@ export default function VaultPage() {
     setLoading(false);
   };
 
-  const deleteLead = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this lead?")) return;
-    setLeads(prev => prev.filter(l => l.id !== id));
+   const deleteLead = async (id: string) => {
+    openConfirm(
+      "Remove Lead?",
+      "Are you sure you want to delete this lead from your vault? This action cannot be undone.",
+       () => {
+        setLeads(prev => prev.filter(l => l.id !== id));
+        fetch(`/api/vault?id=${id}`, { method: "DELETE" });
+        closeConfirm();
+      }
+    );
   };
 
   const deleteCommit = async (id: string) => {
-    if (!confirm("Delete this entire commit batch and all its leads?")) return;
-    setCommits(prev => prev.filter(c => c.id !== id));
-    setLeads(prev => prev.filter(l => l.commitId !== id));
-    if (selectedCommitId === id) setSelectedCommitId(null);
+    openConfirm(
+      "Delete Entire Batch?",
+      "Caution: You are about to delete this entire batch and all its associated leads. This is permanent.",
+      () => {
+        setCommits(prev => prev.filter(c => c.id !== id));
+        setLeads(prev => prev.filter(l => l.commitId !== id));
+        if (selectedCommitId === id) setSelectedCommitId(null);
+        fetch(`/api/vault?commitId=${id}`, { method: "DELETE" });
+        closeConfirm();
+      }
+    );
   };
 
   const toggleSelectAll = () => {
@@ -324,7 +358,7 @@ export default function VaultPage() {
                   </button>
                   <button 
                     onClick={(e) => { e.stopPropagation(); deleteCommit(commit.id); }}
-                    className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-rose-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center shadow-lg hover:scale-110 z-10"
+                    className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-rose-500 text-white rounded-full transition-all flex items-center justify-center shadow-lg hover:scale-110 z-10 border-2 border-white"
                   >
                     <Trash2 size={10} />
                   </button>
@@ -436,6 +470,31 @@ export default function VaultPage() {
                         </div>
                         {lead.Phone}
                       </div>
+
+                      <div className="flex items-center text-[10px] font-bold text-slate-500">
+                        <div className="w-7 h-7 rounded-lg bg-indigo-50 flex items-center justify-center mr-2.5 shrink-0">
+                          <Database size={12} className="text-indigo-500" />
+                        </div>
+                        {lead.Website ? (
+                          <a 
+                            href={lead.Website} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="text-primary hover:underline truncate max-w-[180px] font-bold"
+                          >
+                            {lead.Website}
+                          </a>
+                        ) : (
+                          <a 
+                            href={lead.maps_url} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="text-rose-500 hover:underline truncate max-w-[180px] font-black italic bg-rose-50 px-2 py-0.5 rounded"
+                          >
+                            No Website Found
+                          </a>
+                        )}
+                      </div>
                       
                       <div className="flex items-start text-[10px] text-slate-500 leading-tight min-h-[32px]">
                         <div className="w-7 h-7 rounded-lg bg-rose-50 flex items-center justify-center mr-2.5 shrink-0">
@@ -453,9 +512,9 @@ export default function VaultPage() {
                         <Phone size={12} /> Call Lead
                       </a>
                       <button 
-                        onClick={() => lead.Website ? window.open(lead.Website, '_blank') : alert('No Maps link available')}
+                        onClick={() => window.open(lead.maps_url, '_blank')}
                         className="w-10 h-10 flex items-center justify-center bg-slate-50 text-slate-400 rounded-lg hover:bg-slate-100 transition-all border border-slate-100"
-                        title="Open on Google Maps"
+                        title="Open Google My Business Profile"
                       >
                         <ExternalLink size={14} />
                       </button>
@@ -500,7 +559,11 @@ export default function VaultPage() {
 
               <div className="flex items-center gap-2">
                 <button 
-                  onClick={() => { if(confirm("Delete selected?")) { setLeads(prev => prev.filter(l => !selectedLeads.has(l.id as string))); setSelectedLeads(new Set()); }}}
+                  onClick={() => openConfirm('Delete Selected?', `Delete all ${selectedLeads.size} selected leads?`, () => {
+                    setLeads(prev => prev.filter(l => !selectedLeads.has(l.id as string)));
+                    setSelectedLeads(new Set());
+                    closeConfirm();
+                  })}
                   className="p-2.5 bg-rose-500/10 text-rose-500 rounded-xl hover:bg-rose-500/20 transition-all"
                 >
                   <Trash2 size={16} />
@@ -515,6 +578,48 @@ export default function VaultPage() {
               </div>
             </div>
           </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* In-App Premium Confirmation Modal */}
+      <AnimatePresence>
+        {confirmModal.isOpen && (
+          <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={closeConfirm}
+              className="absolute inset-0 bg-slate-900/60 backdrop-blur-md"
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="relative w-full max-w-sm bg-white rounded-3xl p-8 shadow-2xl overflow-hidden border border-slate-100"
+            >
+              <div className="w-16 h-16 rounded-2xl bg-rose-50 text-rose-500 flex items-center justify-center mb-6">
+                <Trash2 size={32} />
+              </div>
+              <h3 className="text-2xl font-black text-slate-900 leading-tight mb-2">{confirmModal.title}</h3>
+              <p className="text-slate-500 text-sm font-medium leading-relaxed mb-8">{confirmModal.message}</p>
+              
+              <div className="flex gap-3">
+                <button 
+                  onClick={closeConfirm}
+                  className="flex-1 py-4 bg-slate-100 text-slate-500 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-slate-200 transition-all active:scale-95"
+                >
+                  Cancel
+                </button>
+                <button 
+                  onClick={confirmModal.onConfirm}
+                  className="flex-1 py-4 bg-rose-600 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-rose-700 transition-all active:scale-95 shadow-xl shadow-rose-600/20"
+                >
+                   Action
+                </button>
+              </div>
+            </motion.div>
+          </div>
         )}
       </AnimatePresence>
     </div>
