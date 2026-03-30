@@ -60,6 +60,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             plan: "free",
             quota: 50,
             usedQuota: 0,
+            dailyRuns: 0,
+            lastRunDate: new Date().toISOString().split('T')[0], // YYYY-MM-DD
             expiryDate: null,
             createdAt: serverTimestamp(),
             updatedAt: serverTimestamp(),

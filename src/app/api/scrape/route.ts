@@ -24,12 +24,32 @@ async function getUserData(userId: string) {
     return {
       quota: parseInt(data.fields.quota?.integerValue || "0"),
       usedQuota: parseInt(data.fields.usedQuota?.integerValue || "0"),
+      dailyRuns: parseInt(data.fields.dailyRuns?.integerValue || "0"),
+      lastRunDate: data.fields.lastRunDate?.stringValue || null,
       plan: data.fields.plan?.stringValue || "free",
       expiryDate: data.fields.expiryDate?.stringValue || null
     };
   } catch {
     return null;
   }
+}
+
+// Helper to update Daily Usage
+async function updateDailyUsage(userId: string, runs: number, date: string) {
+  const url = `https://firestore.googleapis.com/v1/projects/${FIREBASE_PROJECT_ID}/databases/(default)/documents/users/${userId}?updateMask.fieldPaths=dailyRuns&updateMask.fieldPaths=lastRunDate`;
+  const firestoreFormat = {
+    fields: {
+      dailyRuns: { integerValue: String(runs) },
+      lastRunDate: { stringValue: date }
+    },
+  };
+  try {
+    await fetch(url, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(firestoreFormat),
+    });
+  } catch {}
 }
 
 // Helper to update User Used Quota
@@ -164,13 +184,39 @@ export async function POST(req: NextRequest) {
             return;
           }
 
+          // --- PLAN-BASED LIMITS ---
+          const today = new Date().toISOString().split('T')[0];
+          let dailyRuns = userData.dailyRuns || 0;
+          const lastRunDate = userData.lastRunDate || today;
+
+          // 1. Reset daily runs if it's a new day
+          if (lastRunDate !== today) {
+            dailyRuns = 0;
+          }
+
+          // 2. Daily Run Limit (Free Tier)
+          if (userData.plan === "free" && dailyRuns >= 2) {
+            sendMsg(`⚠️ DAILY LIMIT REACHED: Free users are limited to 2 sessions per day. Please upgrade for unlimited sessions.`);
+            controller.close();
+            return;
+          }
+
+          // 3. Per-Run Limit (Free Tier)
+          let actualGoal = goal;
+          if (userData.plan === "free") {
+            actualGoal = Math.min(goal, 10);
+            if (goal > 10) {
+              sendMsg(`ℹ️ [FREE TIER NOTICE]: Capping session at 10 leads. Upgrade to unlock full extraction.`);
+            }
+          }
+
+          // 4. Existing Quota/Expiry Checks
           if (userData.usedQuota >= userData.quota) {
             sendMsg(`⚠️ QUOTA EXHAUSTED: You have used ${userData.usedQuota}/${userData.quota} leads. Please upgrade your plan.`);
             controller.close();
             return;
           }
 
-          // Expiry Check
           if (userData.plan !== "free" && userData.expiryDate) {
             const expiry = new Date(userData.expiryDate);
             if (expiry < new Date()) {
@@ -179,6 +225,9 @@ export async function POST(req: NextRequest) {
               return;
             }
           }
+
+          // 5. Update Daily Usage immediately upon start
+          await updateDailyUsage(userId, dailyRuns + 1, today);
 
           const query = `${category} in ${city}, ${state}`;
           const commitId = `commit_${Date.now()}`;
@@ -194,9 +243,9 @@ export async function POST(req: NextRequest) {
 
           // Adjust goal if it exceeds remaining quota
           const remainingQuota = userData.quota - userData.usedQuota;
-          const actualGoal = Math.min(goal, remainingQuota);
+          actualGoal = Math.min(actualGoal, remainingQuota);
           
-          if (actualGoal < goal) {
+          if (actualGoal < goal && userData.plan !== "free") {
             sendMsg(`ℹ️ Adjusting goal to ${actualGoal} based on your remaining quota.`);
           }
 

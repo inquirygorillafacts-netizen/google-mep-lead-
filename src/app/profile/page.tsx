@@ -217,6 +217,20 @@ export default function ProfilePage() {
                   </button>
                 )}
 
+                {/* Guide Button - Highlighted */}
+                <button
+                  onClick={() => router.push("/guide")}
+                  className="p-3 bg-primary/10 rounded-2xl border-2 border-primary/20 shadow-lg shadow-primary/5 flex flex-col items-center justify-center gap-2 hover:bg-primary hover:text-white transition-all active:scale-95 group relative overflow-hidden"
+                >
+                  <div className="absolute -top-1 -right-1 w-6 h-6 bg-primary text-white flex items-center justify-center rounded-bl-xl">
+                    <Zap size={10} fill="currentColor" className="animate-pulse" />
+                  </div>
+                  <div className="w-10 h-10 rounded-full bg-white text-primary flex items-center justify-center group-hover:scale-110 transition-transform shadow-sm">
+                    <BookOpen size={18} strokeWidth={2.5} />
+                  </div>
+                  <span className="text-[10px] font-black text-primary group-hover:text-white text-center leading-tight uppercase tracking-widest">Mastery<br/>Guide</span>
+                </button>
+
                 {/* Logout Section Compact */}
                 <button
                   onClick={handleLogout}

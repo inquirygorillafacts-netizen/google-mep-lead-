@@ -6,6 +6,7 @@ import { Play, Pause, MapPin, Search, Activity, Target, Zap, Globe, Info, Shield
 import { State, City } from "country-state-city";
 import clsx from "clsx";
 import { useAuth } from "@/context/AuthContext";
+import { useRouter } from "next/navigation";
 
 interface LogEntry {
   type: "info" | "success" | "error" | "warning" | "success-bold" | "highlight";
@@ -17,22 +18,33 @@ const INDIA_ISO = "IN";
 const STATES = State.getStatesOfCountry(INDIA_ISO);
 
 export default function HunterPage() {
-  const { user } = useAuth();
+  const { user, userData } = useAuth();
   const [selectedStateCode, setSelectedStateCode] = useState("");
   const [selectedDistrict, setSelectedDistrict] = useState("");
   const [area, setArea] = useState("");
   const [category, setCategory] = useState("Spa");
-  const [goal, setGoal] = useState("20");
+  const [goal, setGoal] = useState("10");
 
   const [isHunting, setIsHunting] = useState(false);
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [stats, setStats] = useState({ leads: 0, scanned: 0 });
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showLimitModal, setShowLimitModal] = useState(false);
   const [latestCommit, setLatestCommit] = useState<any>(null);
   const [showStopConfirm, setShowStopConfirm] = useState(false);
   const [copied, setCopied] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
   const [showFilterHint, setShowFilterHint] = useState(false);
+
+  const getRunsRemaining = () => {
+    if (userData?.plan !== "free") return "Unlimited";
+    const runsToday = userData?.dailyRuns || 0;
+    const remaining = 2 - runsToday;
+    return remaining > 0 ? remaining : 0;
+  };
+
+  const runsRemaining = getRunsRemaining();
+
 
   useEffect(() => {
     // Show filter hint only if not already dismissed in previous sessions
@@ -121,6 +133,20 @@ export default function HunterPage() {
       return;
     }
 
+    const targetGoal = parseInt(goal) || 10;
+
+    // Plan Validation (Frontend)
+    if (userData?.plan === "free") {
+      if (userData.dailyRuns >= 2) {
+        addLog("❌ DAILY LIMIT EXHAUSTED: Free users are allowed 2 sessions per day.", "error");
+        return;
+      }
+      if (targetGoal > 10) {
+        setShowLimitModal(true);
+        return;
+      }
+    }
+
     setIsHunting(true);
     setLogs([]);
     setStats({ leads: 0, scanned: 0 });
@@ -164,6 +190,13 @@ export default function HunterPage() {
             try {
               const data = JSON.parse(line.slice(6));
               if (data.message) {
+                // If we get an error/warning about daily limits from the backend
+                if (data.message.includes("DAILY LIMIT REACHED")) {
+                  addLog(`⚠️ ACCESS DENIED: ${data.message} 🖕`, "error");
+                  setIsHunting(false);
+                  return;
+                }
+
                 if (data.message.startsWith("✅ FOUND")) {
                   setStats(prev => {
                     const newLeads = prev.leads + 1;
@@ -285,6 +318,8 @@ export default function HunterPage() {
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const router = useRouter();
+
   return (
     <div className="min-h-full bg-background px-3 pt-6 md:pt-8 md:px-10 max-w-6xl mx-auto pb-20">
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-3 mb-6">
@@ -305,6 +340,12 @@ export default function HunterPage() {
         </motion.div>
 
         <div className="flex items-center gap-2 bg-white p-1 rounded-xl shadow-sm border border-slate-100">
+          {userData?.plan === "free" && (
+             <div className="flex flex-col px-3 border-r border-slate-100">
+                <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Runs Left</span>
+                <span className="text-base font-black text-emerald-600">{runsRemaining}/2</span>
+             </div>
+          )}
           <div className="flex flex-col px-3 border-r border-slate-100">
             <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Leads</span>
             <span className="text-base font-black text-primary">{stats.leads}</span>
@@ -792,6 +833,65 @@ export default function HunterPage() {
                   YES, TERMINATE
                 </button>
               </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+      {/* Termination Guard Modal */}
+      ... (existing modals) ...
+
+      {/* Limit Exceeded Modal */}
+      <AnimatePresence>
+        {showLimitModal && (
+          <div className="fixed inset-0 z-[150] flex items-center justify-center p-6">
+            <motion.div
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              onClick={() => setShowLimitModal(false)}
+              className="absolute inset-0 bg-slate-900/60 backdrop-blur-md"
+            />
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0, y: 20 }} 
+              animate={{ scale: 1, opacity: 1, y: 0 }} 
+              exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              className="relative w-full max-w-md bg-white rounded-[3rem] shadow-2xl p-10 text-center overflow-hidden"
+            >
+              <div className="absolute top-0 left-0 w-full h-2 bg-primary-gradient" />
+              
+              <div className="w-20 h-20 bg-amber-50 text-amber-500 rounded-[2rem] flex items-center justify-center mx-auto mb-8 border-2 border-amber-100/50">
+                <AlertTriangle size={40} strokeWidth={1.5} />
+              </div>
+              
+              <h3 className="text-2xl font-black text-slate-900 mb-3 tracking-tight">FREE TIER LIMIT</h3>
+              <p className="text-slate-500 text-sm mb-10 leading-relaxed px-4 font-medium">
+                Free sessions are capped at <span className="text-primary font-black">10 leads</span>. You requested {goal}. 
+                Would you like to upgrade for unlimited extraction or continue with the free cap?
+              </p>
+              
+              <div className="flex flex-col gap-3">
+                <button
+                  onClick={() => router.push("/pricing")}
+                  className="w-full py-4 bg-slate-900 text-white rounded-2xl font-black text-sm hover:bg-primary shadow-xl shadow-slate-900/10 transition-all active:scale-95 flex items-center justify-center gap-2"
+                >
+                  <Zap size={18} fill="currentColor" /> UPGRADE TO PRO
+                </button>
+                <button
+                  onClick={() => {
+                    setGoal("10");
+                    setShowLimitModal(false);
+                    // startHunt(); // Optionally restart hunt with 10
+                  }}
+                  className="w-full py-4 bg-slate-100 text-slate-600 rounded-2xl font-bold text-sm hover:bg-slate-200 transition-all active:scale-95"
+                >
+                  CAP AT 10 & CONTINUE
+                </button>
+              </div>
+              
+              <button 
+                onClick={() => setShowLimitModal(false)}
+                className="mt-6 text-[10px] font-black uppercase tracking-widest text-slate-300 hover:text-slate-400 transition-colors"
+              >
+                Maybe Later
+              </button>
             </motion.div>
           </div>
         )}
