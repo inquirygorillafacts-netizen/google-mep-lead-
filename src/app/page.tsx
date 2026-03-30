@@ -32,6 +32,24 @@ export default function HunterPage() {
   const [showStopConfirm, setShowStopConfirm] = useState(false);
   const [copied, setCopied] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
+  const [showFilterHint, setShowFilterHint] = useState(false);
+
+  useEffect(() => {
+    // Show filter hint only if not already dismissed in previous sessions
+    const isDismissed = localStorage.getItem("filter_hint_dismissed");
+    if (!isDismissed) {
+      const timer = setTimeout(() => setShowFilterHint(true), 2000); // Delayed show for impact
+      return () => clearTimeout(timer);
+    }
+  }, []);
+
+  const handleFilterClick = () => {
+    setShowFilters(!showFilters);
+    if (!showFilters) {
+      setShowFilterHint(false);
+      localStorage.setItem("filter_hint_dismissed", "true");
+    }
+  };
 
   // Filter States
   const [filters, setFilters] = useState({
@@ -311,16 +329,47 @@ export default function HunterPage() {
                  <Target size={12} className="text-primary" />
                  Target Scope
                </h2>
-               <button 
-                onClick={() => setShowFilters(!showFilters)}
+                <div className="relative">
+                  <AnimatePresence>
+                    {showFilterHint && !showFilters && (
+                      <motion.div
+                        initial={{ opacity: 0, x: 20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: 20 }}
+                        className="absolute right-full mr-4 whitespace-nowrap z-50 pointer-events-none"
+                      >
+                         <div className="flex items-center gap-2">
+                           <div className="bg-primary text-white text-[9px] font-black py-1.5 px-3 rounded-full shadow-lg shadow-primary/20 animate-bounce tracking-widest uppercase">
+                             Unlock Pro Targeting
+                           </div>
+                           <motion.div
+                             animate={{ x: [0, 5, 0] }}
+                             transition={{ repeat: Infinity, duration: 1.5 }}
+                             className="text-primary"
+                           >
+                             <Sliders size={16} strokeWidth={3} className="rotate-90" />
+                           </motion.div>
+                         </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+
+                  <button 
+                    onClick={handleFilterClick}
                 className={clsx(
-                  "flex items-center gap-1 px-1.5 py-0.5 rounded-md transition-all text-[8px] font-black uppercase tracking-widest border",
-                  showFilters ? "bg-primary/10 border-primary/20 text-primary" : "bg-slate-50 border-slate-200 text-slate-400 hover:text-slate-600"
+                  "flex items-center gap-2 px-3 py-1.5 rounded-xl transition-all text-[10px] font-black uppercase tracking-widest border shadow-sm",
+                  showFilters 
+                    ? "bg-primary text-white border-primary shadow-primary/20" 
+                    : "bg-white border-slate-200 text-slate-600 hover:border-primary hover:text-primary"
                 )}
                >
-                 <Sliders size={10} />
-                 {showFilters ? "Hide" : "Filter"}
-               </button>
+                 <Sliders size={12} className={clsx(showFilters ? "text-white" : "text-primary")} />
+                 {showFilters ? "Close Filters" : "Filter Settings"}
+                  {filters.enabled && !showFilters && (
+                    <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
+                  )}
+                </button>
+              </div>
             </div>
 
             {/* Collapsible Filter settings */}
