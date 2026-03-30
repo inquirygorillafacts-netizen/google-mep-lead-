@@ -238,8 +238,8 @@ export default function CRMPage() {
               idx={idx} 
               isSelected={selectedLeads.has(lead.id)}
               onToggle={() => toggleSelect(lead.id)}
-              onStatusUpdate={(status) => updateStatus(lead.id, status)}
-              onNoteUpdate={(notes) => updateNotes(lead.id, notes)}
+              onStatusUpdate={(status: string) => updateStatus(lead.id, status)}
+              onNoteUpdate={(notes: string) => updateNotes(lead.id, notes)}
             />
           ))}
           {filteredLeads.length === 0 && (
@@ -254,7 +254,16 @@ export default function CRMPage() {
   );
 }
 
-function LeadCard({ lead, idx, isSelected, onToggle, onStatusUpdate, onNoteUpdate }: any) {
+interface LeadCardProps {
+  lead: any;
+  idx: number;
+  isSelected: boolean;
+  onToggle: () => void;
+  onStatusUpdate: (status: string) => void;
+  onNoteUpdate: (notes: string) => void;
+}
+
+function LeadCard({ lead, idx, isSelected, onToggle, onStatusUpdate, onNoteUpdate }: LeadCardProps) {
   const [showStatusMenu, setShowStatusMenu] = useState(false);
   const [showNotePad, setShowNotePad] = useState(false);
   const [noteText, setNoteText] = useState(lead.notes || "");
