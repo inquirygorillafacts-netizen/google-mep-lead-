@@ -1,0 +1,74 @@
+{
+  "States": [
+    {
+      "name": "Maharashtra",
+      "districts": [
+        {
+          "name": "Mumbai",
+          "cities": ["Andheri", "Bandra", "Colaba", "Borivali", "Powai"]
+        },
+        {
+          "name": "Pune",
+          "cities": ["Koregaon Park", "Viman Nagar", "Kalyani Nagar", "Baner", "Hinjewadi"]
+        },
+        {
+          "name": "Nagpur",
+          "cities": ["Nagpur City", "Sitabuldi", "Dharampeth"]
+        }
+      ]
+    },
+    {
+      "name": "Rajasthan",
+      "districts": [
+        {
+          "name": "Jaipur",
+          "cities": ["C-Scheme", "Malviya Nagar", "Vaishali Nagar", "Mansarovar", "Sodala"]
+        },
+        {
+          "name": "Jodhpur",
+          "cities": ["Sardarpura", "Shastri Nagar", "Kamla Nehru Nagar"]
+        },
+        {
+          "name": "Udaipur",
+          "cities": ["Udaipur City", "Fatehsagar", "Hiran Magri"]
+        }
+      ]
+    },
+    {
+      "name": "Gujarat",
+      "districts": [
+        {
+          "name": "Ahmedabad",
+          "cities": ["Vastrapur", "Satellite", "Prahlad Nagar", "Navrangpura"]
+        },
+        {
+          "name": "Surat",
+          "cities": ["Vesu", "Adajan", "Varachha", "Piplod"]
+        }
+      ]
+    },
+    {
+      "name": "Delhi",
+      "districts": [
+        {
+          "name": "South Delhi",
+          "cities": ["Saket", "Hauz Khas", "Greater Kailash", "Lajpat Nagar"]
+        },
+        {
+          "name": "New Delhi",
+          "cities": ["Connaught Place", "Dwarka", "Rohini"]
+        }
+      ]
+    }
+  ],
+  "Categories": [
+    "Spa",
+    "Restaurant",
+    "Gym",
+    "Salon",
+    "Hospital",
+    "Cafe",
+    "School",
+    "Hotel"
+  ]
+}
