@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { User as UserIcon, LogOut, CreditCard, ChevronRight, ShieldCheck, Zap, Mail, Crown, Settings, Bell, CircleHelp, Moon, Sun, CheckCircle2, Download, X, Phone, MessageSquare } from "lucide-react";
+import { User as UserIcon, LogOut, CreditCard, ChevronRight, ShieldCheck, Zap, Mail, Crown, Settings, Bell, CircleHelp, Moon, Sun, CheckCircle2, Download, X, Phone, MessageSquare, BookOpen } from "lucide-react";
 import clsx from "clsx";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
