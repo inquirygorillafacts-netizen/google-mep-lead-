@@ -35,14 +35,19 @@ async function getUserData(userId: string) {
 }
 
 // Helper to update Daily Usage
-async function updateDailyUsage(userId: string, runs: number, date: string) {
-  const url = `https://firestore.googleapis.com/v1/projects/${FIREBASE_PROJECT_ID}/databases/(default)/documents/users/${userId}?updateMask.fieldPaths=dailyRuns&updateMask.fieldPaths=lastRunDate`;
-  const firestoreFormat = {
-    fields: {
-      dailyRuns: { integerValue: String(runs) },
-      lastRunDate: { stringValue: date }
-    },
+// Helper to update Daily Usage & Reset Quota on a new day
+async function updateDailyUsage(userId: string, runs: number, date: string, resetUsedQuota: boolean) {
+  let url = `https://firestore.googleapis.com/v1/projects/${FIREBASE_PROJECT_ID}/databases/(default)/documents/users/${userId}?updateMask.fieldPaths=dailyRuns&updateMask.fieldPaths=lastRunDate`;
+  if (resetUsedQuota) url += `&updateMask.fieldPaths=usedQuota`;
+  
+  const fields: any = {
+    dailyRuns: { integerValue: String(runs) },
+    lastRunDate: { stringValue: date }
   };
+  if (resetUsedQuota) fields.usedQuota = { integerValue: "0" };
+
+  const firestoreFormat = { fields };
+  
   try {
     await fetch(url, {
       method: "PATCH",
@@ -189,9 +194,12 @@ export async function POST(req: NextRequest) {
           let dailyRuns = userData.dailyRuns || 0;
           const lastRunDate = userData.lastRunDate || today;
 
-          // 1. Reset daily runs if it's a new day
+          // 1. Reset daily runs and usedQuota if it's a new day
+          let isNewDay = false;
           if (lastRunDate !== today) {
             dailyRuns = 0;
+            userData.usedQuota = 0;
+            isNewDay = true;
           }
 
           // 2. Daily Run Limit (Free Tier)
@@ -201,18 +209,25 @@ export async function POST(req: NextRequest) {
             return;
           }
 
-          // 3. Per-Run Limit (Free Tier)
+          // 3. Define Daily Limits Based on Plans
+          const planStr = (userData.plan || "free").toLowerCase();
+          let dailyLimit = 0;
+          if (planStr === "free") dailyLimit = 10;
+          else if (planStr === "starter") dailyLimit = 500;
+          else if (planStr === "pro") dailyLimit = 2500;
+          else if (planStr === "elite" || planStr === "premium") dailyLimit = 5000;
+          else dailyLimit = 100; // safe fallback
+
           let actualGoal = goal;
-          if (userData.plan === "free") {
+          
+          if (planStr === "free") {
             actualGoal = Math.min(goal, 10);
-            if (goal > 10) {
-              sendMsg(`ℹ️ [FREE TIER NOTICE]: Capping session at 10 leads. Upgrade to unlock full extraction.`);
-            }
+            if (goal > 10) sendMsg(`ℹ️ [FREE TIER NOTICE]: Capping session at 10 leads. Upgrade to unlock full extraction.`);
           }
 
-          // 4. Existing Quota/Expiry Checks
-          if (userData.usedQuota >= userData.quota) {
-            sendMsg(`⚠️ QUOTA EXHAUSTED: You have used ${userData.usedQuota}/${userData.quota} leads. Please upgrade your plan.`);
+          // 4. Daily Expiry Check
+          if (userData.usedQuota >= dailyLimit) {
+            sendMsg(`⚠️ DAILY QUOTA EXHAUSTED: You have used your ${dailyLimit} leads for today on the ${userData.plan.toUpperCase()} plan. Wait until tomorrow or upgrade.`);
             controller.close();
             return;
           }
@@ -227,7 +242,7 @@ export async function POST(req: NextRequest) {
           }
 
           // 5. Update Daily Usage immediately upon start
-          await updateDailyUsage(userId, dailyRuns + 1, today);
+          await updateDailyUsage(userId, dailyRuns + 1, today, isNewDay);
 
           const query = `${category} in ${city}, ${state}`;
           const commitId = `commit_${Date.now()}`;
@@ -241,16 +256,15 @@ export async function POST(req: NextRequest) {
             sendMsg(`📡 [SYSTEM]: FULL SPECTRUM SCAN ACTIVE (Filters Disabled) 🌪️`);
           }
 
-          // Adjust goal if it exceeds remaining quota
-          const remainingQuota = userData.quota - userData.usedQuota;
+          // Adjust goal if it exceeds remaining daily quota
+          const remainingDailyQuota = dailyLimit - userData.usedQuota;
           
-          // Bypassing Quota Limit for testing / localhost
           if (process.env.NEXT_PUBLIC_BASE_URL && process.env.NEXT_PUBLIC_BASE_URL.includes("localhost")) {
-            sendMsg(`🔓 [DEV MODE]: Appki limit bypass kar di gayi hai testing ke liye.`);
+            sendMsg(`🔓 [DEV MODE]: Bhai limit bypass kar di gayi hai local testing ke liye.`);
           } else {
-            actualGoal = Math.min(actualGoal, remainingQuota);
-            if (actualGoal < goal && userData.plan !== "free") {
-              sendMsg(`ℹ️ Adjusting goal to ${actualGoal} based on your remaining quota.`);
+            actualGoal = Math.min(actualGoal, remainingDailyQuota);
+            if (actualGoal < goal && planStr !== "free") {
+              sendMsg(`ℹ️ Adjusting goal to ${actualGoal} because you only have that many leads left for TODAY.`);
             }
           }
 
