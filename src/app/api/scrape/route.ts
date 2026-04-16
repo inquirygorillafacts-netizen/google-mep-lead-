@@ -243,10 +243,15 @@ export async function POST(req: NextRequest) {
 
           // Adjust goal if it exceeds remaining quota
           const remainingQuota = userData.quota - userData.usedQuota;
-          actualGoal = Math.min(actualGoal, remainingQuota);
           
-          if (actualGoal < goal && userData.plan !== "free") {
-            sendMsg(`ℹ️ Adjusting goal to ${actualGoal} based on your remaining quota.`);
+          // Bypassing Quota Limit for testing / localhost
+          if (process.env.NEXT_PUBLIC_BASE_URL && process.env.NEXT_PUBLIC_BASE_URL.includes("localhost")) {
+            sendMsg(`🔓 [DEV MODE]: Appki limit bypass kar di gayi hai testing ke liye.`);
+          } else {
+            actualGoal = Math.min(actualGoal, remainingQuota);
+            if (actualGoal < goal && userData.plan !== "free") {
+              sendMsg(`ℹ️ Adjusting goal to ${actualGoal} based on your remaining quota.`);
+            }
           }
 
           await createCommit(commitId, category, city, state, actualGoal, userId);
