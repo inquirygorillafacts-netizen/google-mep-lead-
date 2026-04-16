@@ -299,18 +299,19 @@ export async function POST(req: NextRequest) {
             for (const place of results) {
               if (collectedCounter >= actualGoal) break;
 
-              // STRICT CATEGORY MATCH
+              // STRICT CATEGORY MATCH (Now handles Typos)
               const categoryWords = category.toLowerCase().split(/\s+/).filter((w: string) => w.length > 2);
               let categoryMatch = false;
               if (categoryWords.length === 0) categoryMatch = true; 
               else {
                 const nameStr = (place.name || "").toLowerCase();
                 const typesStr = (place.types || []).join(" ").toLowerCase();
-                categoryMatch = categoryWords.some((word: string) => nameStr.includes(word) || typesStr.includes(word));
-                // For 'architecture', we also accept 'architect'
-                if (!categoryMatch && category.toLowerCase().includes('architect')) {
-                   categoryMatch = nameStr.includes('architect') || typesStr.includes('architect');
-                }
+                categoryMatch = categoryWords.some((word: string) => {
+                    if (nameStr.includes(word) || typesStr.includes(word)) return true;
+                    // Typo resilience for 'architecture' / 'architect'
+                    if (word.includes('arch')) return nameStr.includes('arch') || typesStr.includes('arch');
+                    return false;
+                });
               }
               if (!categoryMatch) continue;
 
