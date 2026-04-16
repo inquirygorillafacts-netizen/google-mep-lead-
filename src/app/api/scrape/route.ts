@@ -280,6 +280,21 @@ export async function POST(req: NextRequest) {
             for (const place of results) {
               if (collectedCounter >= actualGoal) break;
 
+              // STRICT CATEGORY MATCH
+              const categoryWords = category.toLowerCase().split(/\s+/).filter((w: string) => w.length > 2);
+              let categoryMatch = false;
+              if (categoryWords.length === 0) categoryMatch = true; 
+              else {
+                const nameStr = (place.name || "").toLowerCase();
+                const typesStr = (place.types || []).join(" ").toLowerCase();
+                categoryMatch = categoryWords.some((word: string) => nameStr.includes(word) || typesStr.includes(word));
+                // For 'architecture', we also accept 'architect'
+                if (!categoryMatch && category.toLowerCase().includes('architect')) {
+                   categoryMatch = nameStr.includes('architect') || typesStr.includes('architect');
+                }
+              }
+              if (!categoryMatch) continue;
+
               const placeId = place.place_id;
               const rating = place.rating || 0;
               const userRatingsTotal = place.user_ratings_total || 0;
@@ -331,7 +346,12 @@ export async function POST(req: NextRequest) {
             }
 
             pageToken = data.next_page_token;
-            if (!pageToken) break;
+            if (!pageToken) {
+              if (collectedCounter < actualGoal) {
+                sendMsg(`⚠️ [SYSTEM]: Area exhausted. Found ${collectedCounter}/${actualGoal} strict matches in this region.`);
+              }
+              break;
+            }
 
             sendMsg(`⏳ Loading next page of results...`);
             await new Promise((res) => setTimeout(res, 2000));

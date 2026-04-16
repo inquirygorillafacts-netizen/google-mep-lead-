@@ -22,7 +22,7 @@ export default function HunterPage() {
   const [selectedStateCode, setSelectedStateCode] = useState("");
   const [selectedDistrict, setSelectedDistrict] = useState("");
   const [area, setArea] = useState("");
-  const [category, setCategory] = useState("Spa");
+  const [category, setCategory] = useState("");
   const [goal, setGoal] = useState("10");
 
   const [isHunting, setIsHunting] = useState(false);
@@ -838,7 +838,6 @@ export default function HunterPage() {
         )}
       </AnimatePresence>
       {/* Termination Guard Modal */}
-      ... (existing modals) ...
 
       {/* Limit Exceeded Modal */}
       <AnimatePresence>
