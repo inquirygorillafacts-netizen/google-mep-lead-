@@ -23,7 +23,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isSigningIn, setIsSigningIn] = useState(false);
 
   useEffect(() => {
+    // Safety timeout: If Firebase doesn't respond in 6 seconds, stop the loading screen
+    const timeoutId = setTimeout(() => {
+      setLoading(currentLoading => {
+        if (currentLoading) {
+          console.warn("Auth initialization timed out. Proceeding...");
+          return false;
+        }
+        return false;
+      });
+    }, 6000);
+
     const unsubscribeAuth = onAuthStateChanged(auth, (currentUser) => {
+      clearTimeout(timeoutId);
       setUser(currentUser);
       // Fast-track the loading state. Once we know if the user is logged in or out,
       // we can let the app continue. UserData will sync in the background.
@@ -34,7 +46,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     });
 
-    return () => unsubscribeAuth();
+    return () => {
+      unsubscribeAuth();
+      clearTimeout(timeoutId);
+    };
   }, []);
 
   // Sync User Data in Background

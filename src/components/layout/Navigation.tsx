@@ -4,12 +4,13 @@ import { useState, useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
-import { Compass, Layers, MessageSquare, CreditCard, Wallet, UserCircle2, ChevronRight, LogOut, Search, Database, MessageCircle, User, Command, Zap } from "lucide-react";
+import { Compass, Layers, MessageSquare, CreditCard, Wallet, UserCircle2, ChevronRight, LogOut, Search, Database, MessageCircle, User, Command, Zap, LayoutDashboard } from "lucide-react";
 import clsx from "clsx";
 import { useAuth } from "@/context/AuthContext";
 
 const navItems = [
-  { name: "Hunter", path: "/", icon: Compass, color: "text-blue-500", key: "h" },
+  { name: "Dashboard", path: "/", icon: LayoutDashboard, color: "text-blue-500", key: "h" },
+  { name: "Bulk Mining", path: "/owner/bulk", icon: Zap, color: "text-orange-500", key: "b" },
   { name: "CRM", path: "/crm", icon: UserCircle2, color: "text-indigo-500", key: "c" },
   { name: "Vault", path: "/vault", icon: Layers, color: "text-purple-500", key: "v" },
   { name: "Campaigns", path: "/campaigns", icon: MessageSquare, color: "text-green-500", key: "m" },

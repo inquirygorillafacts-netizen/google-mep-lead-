@@ -45,7 +45,7 @@ export default function LoginPage() {
               <div className="w-12 h-12 bg-white rounded-2xl shadow-lg flex items-center justify-center p-1">
                 <img src="/logo.png" alt="LeadGorilla" className="w-full h-full object-contain" />
               </div>
-              <span className="text-2xl font-black tracking-tight">LeadGorilla <span className="text-blue-500">Pro</span></span>
+              <span className="text-2xl font-black tracking-tight text-white">Lead <span className="text-blue-500">Extractor</span></span>
             </div>
             
             <h1 className="text-5xl lg:text-6xl font-extrabold mb-6 leading-tight">
@@ -86,7 +86,7 @@ export default function LoginPage() {
           >
             <div className="text-center mb-10">
               <h2 className="text-3xl font-bold text-white mb-3">Welcome Back</h2>
-              <p className="text-gray-400">Join 500+ businesses growing with LeadGorilla</p>
+              <p className="text-gray-400">Join 500+ businesses growing with Lead Extractor</p>
             </div>
 
             <button

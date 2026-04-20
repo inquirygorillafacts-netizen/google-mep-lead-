@@ -282,7 +282,7 @@ export default function CampaignsPage() {
                                     </div>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div className="relative">
-                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2 ml-1">X-API-KEY</label>
+                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2 ml-1">WhatsApp API</label>
                                             <div className="relative">
                                                 <input 
                                                     type="password" 
@@ -302,7 +302,7 @@ export default function CampaignsPage() {
                                             </div>
                                         </div>
                                         <div>
-                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1.5 ml-1">Connect Number / Session ID</label>
+                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1.5 ml-1">Connect Number / Session ID (+91830280XXXX)</label>
                                             {availableSessions.length > 0 ? (
                                                 <div className="space-y-2">
                                                     <select 
@@ -329,7 +329,7 @@ export default function CampaignsPage() {
                                                     type="text" 
                                                     value={sessionId}
                                                     onChange={(e) => setSessionId(e.target.value)}
-                                                    placeholder="uid1_bot1" 
+                                                    placeholder="+91830280XXXX" 
                                                     className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-mono focus:ring-2 focus:ring-primary outline-none transition-all"
                                                 />
                                             )}
