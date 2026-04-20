@@ -226,12 +226,16 @@ export default function HunterPage() {
               </div>
             </div>
 
-            <div className="bg-slate-900 rounded-3xl p-6 text-white overflow-hidden relative group">
-              <div className="absolute top-[-20%] right-[-10%] w-[50%] h-[50%] bg-blue-600/20 blur-[60px] rounded-full group-hover:bg-blue-600/30 transition-all" />
-              <h4 className="text-[11px] font-black uppercase tracking-[0.2em] text-blue-400 mb-3">Live Integration</h4>
-              <p className="text-xs text-slate-400 font-medium leading-relaxed">
-                Connect your session in the <span className="text-white font-bold underline cursor-pointer" onClick={() => router.push('/campaigns')}>Campaigns</span> tab to enable real-time WhatsApp sync.
-              </p>
+            <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm relative group overflow-hidden">
+              <div className="absolute top-[-20%] right-[-10%] w-[50%] h-[50%] bg-blue-50 blur-[60px] rounded-full group-hover:bg-blue-100 transition-all" />
+              <div className="relative z-10">
+                <h4 className="text-[11px] font-black uppercase tracking-[0.2em] text-blue-600 mb-3 flex items-center gap-2">
+                  <Send size={14} /> Live Integration
+                </h4>
+                <p className="text-xs text-slate-500 font-bold leading-relaxed">
+                  Connect your session in the <span className="text-blue-600 underline cursor-pointer hover:text-blue-700" onClick={() => router.push('/campaigns')}>Campaigns</span> tab to enable real-time WhatsApp sync.
+                </p>
+              </div>
             </div>
           </div>
 
