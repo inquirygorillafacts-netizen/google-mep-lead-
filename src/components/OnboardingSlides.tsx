@@ -12,23 +12,11 @@ export default function OnboardingSlides() {
 
   const slides = [
     {
-      title: "Best B2B Lead Gen SaaS",
-      description: "Extract thousands of verified leads in seconds with our premium engine.",
+      title: "Welcome to Lead Extractor",
+      description: "this is a nambr one Lead Extractor saas kreted by yogiraj",
       icon: <Zap className="w-12 h-12 text-blue-500" />,
       color: "bg-blue-500/10",
-    },
-    {
-      title: "Install App for Better Experience",
-      description: "Get instant notifications, offline access, and a faster interface by installing LeadGorilla.",
-      icon: <Download className="w-12 h-12 text-purple-500" />,
-      color: "bg-purple-500/10",
-    },
-    {
-      title: "Secure & Verified Data",
-      description: "Every lead is verified to ensure your outreach campaigns never hit a dead end.",
-      icon: <ShieldCheck className="w-12 h-12 text-green-500" />,
-      color: "bg-green-500/10",
-    },
+    }
   ];
 
   useEffect(() => {
