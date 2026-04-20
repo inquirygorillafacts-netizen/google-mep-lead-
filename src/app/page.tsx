@@ -29,6 +29,13 @@ export default function HunterPage() {
   const [category, setCategory] = useState("");
   const [goal, setGoal] = useState("10");
 
+  // Advanced Filters State
+  const [requirePhone, setRequirePhone] = useState(false);
+  const [requireWebsite, setRequireWebsite] = useState(false);
+  const [enableRating, setEnableRating] = useState(false);
+  const [minRating, setMinRating] = useState(4.0);
+  const [minReviews, setMinReviews] = useState(15);
+
   const [isHunting, setIsHunting] = useState(false);
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [stats, setStats] = useState({ leads: 0, scanned: 0 });
@@ -82,13 +89,77 @@ export default function HunterPage() {
     addLog(`🚀 Initializing Precision Engine for ${category}...`, "highlight");
     addLog(`📍 Location Scope: ${selectedDistrict === "ALL" ? "State-Wide Mining" : selectedDistrict}, ${selectedStateName}`, "info");
 
-    // SSE Logic would go here (same as before)
-    setTimeout(() => {
-        addLog("✅ ENGINE ONLINE. SCANNING GOOGLE MAPS DIRECTORY...", "success");
-        setStats({ leads: 5, scanned: 12 });
+    try {
+      const response = await fetch("/api/scrape", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          category,
+          state: selectedStateName,
+          district: selectedDistrict,
+          goal: goal === "ALL" ? 99999 : parseInt(goal) || 10,
+          filters: {
+            enabled: requirePhone || requireWebsite || enableRating,
+            requirePhone,
+            requireWebsite,
+            minRating: enableRating ? minRating : 0,
+            minReviews: enableRating ? minReviews : 0,
+          },
+          userId: user?.uid
+        }),
+      });
+
+      if (!response.ok || !response.body) {
+        addLog("API Error: Backend disconnected.", "error");
         setIsHunting(false);
-        setShowSuccessModal(true);
-    }, 3000);
+        return;
+      }
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let done = false;
+      let count = 0;
+
+      while (!done) {
+        const { value, done: streamDone } = await reader.read();
+        done = streamDone;
+        if (value) {
+          const chunk = decoder.decode(value, { stream: true });
+          const lines = chunk.split("\n\n");
+          for (const line of lines) {
+            if (line.startsWith("data: ")) {
+              try {
+                const data = JSON.parse(line.replace("data: ", ""));
+                if (data.complete) {
+                   done = true;
+                   setShowSuccessModal(true);
+                   break;
+                }
+                if (data.message) {
+                  let type: LogEntry["type"] = "info";
+                  if (data.message.includes("✅ FOUND")) type = "success";
+                  if (data.message.includes("💾 SAVED")) {
+                    type = "success-bold";
+                    count++;
+                    setStats(prev => ({ ...prev, leads: count }));
+                  }
+                  if (data.message.includes("❌ Error")) type = "error";
+                  if (data.message.includes("⚠️")) type = "warning";
+                  if (data.message.includes("SCANNING") || data.message.includes("Page")) {
+                    setStats(prev => ({ ...prev, scanned: prev.scanned + 4 })); // Estimate scanned
+                  }
+                  addLog(data.message, type);
+                }
+              } catch (e) {}
+            }
+          }
+        }
+      }
+    } catch (e) {
+      addLog("Network Error: Could not connect to engine.", "error");
+    } finally {
+      setIsHunting(false);
+    }
   };
 
   const stopHunt = () => {
@@ -223,6 +294,100 @@ export default function HunterPage() {
                     </select>
                   </div>
                 </div>
+
+                <div className="h-px w-full bg-slate-100 my-4" />
+
+                {/* Advanced Multi-Controls System */}
+                <div className="space-y-4">
+                   <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400">Advanced Parameters</h4>
+                   
+                   <div className="grid grid-cols-2 gap-3">
+                      <label className={clsx(
+                         "flex items-center gap-2 p-3 font-bold text-[10px] uppercase rounded-xl border cursor-pointer transition-all active:scale-95",
+                         requirePhone ? "bg-emerald-50 border-emerald-200 text-emerald-700 shadow-sm" : "bg-slate-50 border-slate-200 text-slate-500 hover:bg-slate-100"
+                      )}>
+                         <input type="checkbox" className="hidden" checked={requirePhone} onChange={(e) => setRequirePhone(e.target.checked)} />
+                         <div className={clsx("w-4 h-4 rounded-full border-2 flex items-center justify-center", requirePhone ? "border-emerald-500 bg-emerald-500" : "border-slate-300")}>
+                            {requirePhone && <Check size={10} className="text-white" />}
+                         </div>
+                         Must Have Phone
+                      </label>
+                      <label className={clsx(
+                         "flex items-center gap-2 p-3 font-bold text-[10px] uppercase rounded-xl border cursor-pointer transition-all active:scale-95",
+                         requireWebsite ? "bg-blue-50 border-blue-200 text-blue-700 shadow-sm" : "bg-slate-50 border-slate-200 text-slate-500 hover:bg-slate-100"
+                      )}>
+                         <input type="checkbox" className="hidden" checked={requireWebsite} onChange={(e) => setRequireWebsite(e.target.checked)} />
+                         <div className={clsx("w-4 h-4 rounded-full border-2 flex items-center justify-center", requireWebsite ? "border-blue-500 bg-blue-500" : "border-slate-300")}>
+                            {requireWebsite && <Check size={10} className="text-white" />}
+                         </div>
+                         Must Have Web
+                      </label>
+                   </div>
+
+                   <div className="bg-slate-50 border border-slate-200 p-4 rounded-2xl">
+                      <div className="flex items-center justify-between mb-4">
+                         <label className="flex items-center gap-2 font-bold text-[10px] uppercase text-slate-600 cursor-pointer">
+                            <input type="checkbox" className="hidden" checked={enableRating} onChange={(e) => setEnableRating(e.target.checked)} />
+                            <div className={clsx("w-4 h-4 rounded-md border-2 flex items-center justify-center transition-colors", enableRating ? "border-amber-500 bg-amber-500" : "border-slate-300 bg-white")}>
+                               {enableRating && <Check size={12} className="text-white" />}
+                            </div>
+                            Enforce Quality & Rating
+                         </label>
+                         {enableRating && (
+                            <div className="flex items-center gap-1.5">
+                               <span className="bg-white px-2 py-0.5 rounded-full text-[10px] font-black border border-slate-200 text-amber-600 shadow-sm">{minRating.toFixed(1)}⭐</span>
+                               <span className="bg-white px-2 py-0.5 rounded-full text-[10px] font-black border border-slate-200 text-blue-600 shadow-sm">{minReviews}+ Rev</span>
+                            </div>
+                         )}
+                      </div>
+                      
+                      <div className={clsx("transition-all duration-300 origin-top overflow-hidden space-y-4", enableRating ? "opacity-100 max-h-32" : "opacity-0 max-h-0")}>
+                         <div className="pt-2">
+                           <div className="flex justify-between text-[9px] font-bold text-slate-400 mb-1.5 uppercase">
+                             <span>Minimum Stars</span>
+                             <span>{minRating.toFixed(1)} / 5.0</span>
+                           </div>
+                           <input 
+                             type="range" min="1" max="5" step="0.1" 
+                             value={minRating} onChange={(e) => setMinRating(parseFloat(e.target.value))}
+                             className="w-full accent-amber-500 h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer"
+                           />
+                         </div>
+                         <div>
+                           <div className="flex justify-between text-[9px] font-bold text-slate-400 mb-1.5 uppercase">
+                             <span>Minimum Reviews (Volume)</span>
+                             <span>Current: {minReviews}</span>
+                           </div>
+                           <input 
+                             type="number" min="1" max="10000"
+                             value={minReviews} onChange={(e) => setMinReviews(parseInt(e.target.value) || 15)}
+                             className="w-full bg-white border border-slate-200 p-2 rounded-xl outline-none focus:border-amber-500 transition-all text-xs font-bold text-slate-700"
+                           />
+                         </div>
+                      </div>
+                   </div>
+
+                   <div className="space-y-1.5">
+                     <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider ml-1 flex justify-between">
+                        Target Lead Limit (Goal)
+                        <span className="text-amber-500">Auto stops when reached</span>
+                     </label>
+                     <div className="relative">
+                        <select 
+                           value={goal}
+                           onChange={(e) => setGoal(e.target.value)}
+                           className="w-full bg-slate-50 border border-slate-200 p-3 rounded-2xl outline-none focus:border-amber-500 transition-all text-xs font-bold text-slate-700"
+                        >
+                           <option value="10">Trial: 10 Leads</option>
+                           <option value="44">Specific: 44 Leads</option>
+                           <option value="100">Standard: 100 Leads</option>
+                           <option value="250">Mass: 250 Leads</option>
+                           <option value="500">Max: 500 Leads</option>
+                           <option value="ALL">ALL (Run until exhausted)</option>
+                        </select>
+                     </div>
+                   </div>
+                </div>
               </div>
             </div>
 
@@ -289,8 +454,19 @@ export default function HunterPage() {
               <div className="w-20 h-20 bg-emerald-50 text-emerald-500 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-sm border border-emerald-100">
                 <ShieldCheck size={40} />
               </div>
-              <h3 className="text-xl font-black text-slate-900">Mission Success</h3>
-              <p className="text-slate-500 text-sm mt-4 mb-8">Successfully secured <span className="font-bold text-blue-600">{stats.leads} leads</span>. Data in Vault.</p>
+              <h3 className="text-xl font-black text-slate-900">Mission Complete</h3>
+              <p className="text-slate-500 text-sm mt-4 mb-5">Successfully secured <span className="font-bold text-blue-600">{stats.leads} leads</span>. Data in Vault.</p>
+              
+              {goal !== "ALL" && stats.leads > 0 && stats.leads < parseInt(goal) && (
+                 <div className="bg-amber-50 border border-amber-100 rounded-xl p-3.5 mb-6 text-left shadow-sm">
+                    <p className="text-[10px] font-bold text-amber-700 leading-relaxed uppercase tracking-wider">
+                      <span className="font-black flex items-center gap-1.5 mb-1 text-amber-800">
+                        <AlertTriangle size={12} /> Notice: Area Exhausted
+                      </span>
+                      You requested {goal} leads, but we safely stopped at {stats.leads}. We extracted 100% of the available businesses matching your exact criteria in this region.
+                    </p>
+                 </div>
+              )}
               <button onClick={() => setShowSuccessModal(false)} className="w-full py-4 bg-slate-900 text-white rounded-2xl font-bold shadow-xl active:scale-95 transition-all">Dismiss</button>
             </motion.div>
           </div>

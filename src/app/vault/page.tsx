@@ -140,7 +140,6 @@ export default function VaultPage() {
               Address: doc.fields.address?.stringValue || "N/A",
               Rating: doc.fields.rating?.stringValue || "N/A",
               Reviews: doc.fields.reviews?.integerValue || "0",
-              EstPrice: doc.fields.est_price?.stringValue || "N/A",
               Status: doc.fields.status?.stringValue || "New",
               commitId: doc.fields.commitId?.stringValue || "legacy",
               Website: doc.fields.website?.stringValue || "",

@@ -28,12 +28,25 @@ const INDIA_ISO = "IN";
 const UT_ISO_CODES = ["AN", "CH", "DH", "DL", "JK", "LA", "LD", "PY"];
 const STATES_ALL = State.getStatesOfCountry(INDIA_ISO);
 
+const PREDEFINED_CATEGORIES = [
+  "Architects",
+  "Luxury Real Estate Developers",
+  "Real Estate Builders",
+  "Interior Designers",
+  "Urban Planners",
+  "City Planners",
+  "Construction Companies",
+  "Civil Engineers",
+  "Custom"
+];
+
 export default function OwnerBulkPage() {
   // Config
   const [selectionType, setSelectionType] = useState<"state" | "ut">("state");
   const [selectedStateCode, setSelectedStateCode] = useState("");
   const [selectedDistrict, setSelectedDistrict] = useState("");
-  const [category, setCategory] = useState("Architects");
+  const [category, setCategory] = useState(PREDEFINED_CATEGORIES[0]);
+  const [isCustomCategory, setIsCustomCategory] = useState(false);
   
   // State
   const [districts, setDistricts] = useState<string[]>([]);
@@ -176,12 +189,32 @@ export default function OwnerBulkPage() {
               <div className="space-y-4">
                 <div className="space-y-1.5">
                   <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider ml-1">Target Category</label>
-                  <input 
-                    type="text"
-                    value={category}
-                    onChange={(e) => setCategory(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-200 p-3 rounded-2xl outline-none focus:border-blue-600 text-xs font-bold text-slate-700"
-                  />
+                  <select 
+                    value={isCustomCategory ? "Custom" : category}
+                    onChange={(e) => {
+                      if (e.target.value === "Custom") {
+                        setIsCustomCategory(true);
+                        setCategory("");
+                      } else {
+                        setIsCustomCategory(false);
+                        setCategory(e.target.value);
+                      }
+                    }}
+                    className="w-full bg-slate-50 border border-slate-200 p-3 rounded-2xl outline-none focus:border-blue-600 text-xs font-bold text-slate-700 mb-2"
+                  >
+                    {PREDEFINED_CATEGORIES.map(cat => <option key={cat} value={cat}>{cat}</option>)}
+                  </select>
+                  
+                  {isCustomCategory && (
+                    <input 
+                      type="text"
+                      value={category}
+                      onChange={(e) => setCategory(e.target.value)}
+                      placeholder="Type custom category..."
+                      className="w-full bg-slate-50 border border-amber-200 p-3 rounded-2xl outline-none focus:border-amber-500 text-xs font-bold text-slate-700"
+                      autoFocus
+                    />
+                  )}
                 </div>
                 <div className="space-y-1.5">
                   <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider ml-1">{selectionType === "state" ? "Select State" : "Select UT"}</label>

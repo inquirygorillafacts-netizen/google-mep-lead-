@@ -168,7 +168,7 @@ export async function POST(req: NextRequest) {
     const filterCfg = filters?.enabled ? filters : {
       minRating: 0,
       minReviews: 0,
-      requireNoWebsite: false,
+      requireWebsite: false,
       requirePhone: false
     };
 
@@ -333,7 +333,7 @@ export async function POST(req: NextRequest) {
                 const phone = details.formatted_phone_number;
 
                 // ADDITIONAL FILTERS
-                const websitePass = !filterCfg.requireNoWebsite || !website;
+                const websitePass = !filterCfg.requireWebsite || !!website;
                 const phonePass = !filterCfg.requirePhone || !!phone;
 
                 if (websitePass && phonePass) {

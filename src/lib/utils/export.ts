@@ -8,7 +8,6 @@ export interface Lead {
   Address: string;
   Rating: string | number;
   Reviews: string | number;
-  EstPrice: string;
   Status: string;
   id?: string;
   commitId?: string;
