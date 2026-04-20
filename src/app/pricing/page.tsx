@@ -82,9 +82,9 @@ export default function PricingPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           amount: numericAmount,
-          productinfo: `${planName} Plan - LeadGorilla`,
+          productinfo: `${planName} Plan - Lead Extractor`,
           firstname: user?.displayName || "User",
-          email: user?.email || "test@leadgorilla.com",
+          email: user?.email || "test@leadextractor.com",
           phone: "9999999999", // Mock phone or user's phone
           txnid,
           userId: user.uid,
@@ -110,7 +110,7 @@ export default function PricingPage() {
         amount: numericAmount,
         productinfo: `${planName} Plan - LeadGorilla`,
         firstname: user?.displayName || "User",
-        email: user?.email || "test@leadgorilla.com",
+        email: user?.email || "test@leadextractor.com",
         phone: userData?.phone || "9999999999",
         surl: data.surl,
         furl: data.furl,
